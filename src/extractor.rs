@@ -2,6 +2,7 @@ use dom;
 use error::Error;
 use html5ever::tendril::stream::TendrilSink;
 use html5ever::{parse_document, serialize};
+use log::{debug, trace};
 use markup5ever_rcdom::{RcDom, SerializableHandle};
 #[cfg(feature = "reqwest")]
 use reqwest;
@@ -50,6 +51,10 @@ where
     let handle = dom.document.clone();
     scorer::preprocess(&mut dom, handle.clone(), &mut title);
     scorer::find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
+
+    debug!("Found candidates: {}", candidates.values().len());
+    trace!("Found candidates: {:?}", candidates.values());
+
     let mut id: &str = "/";
     let mut top_candidate: &Candidate = &Candidate {
         node: handle.clone(),
