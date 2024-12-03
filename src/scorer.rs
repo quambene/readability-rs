@@ -408,7 +408,7 @@ impl<'a> Scorer<'a> {
         false
     }
 
-    pub fn is_candidate(&self, handle: Handle) -> bool {
+    fn is_candidate(&self, handle: Handle) -> bool {
         let text_len = dom::text_len(handle.clone());
         if text_len < 20 {
             return false;
