@@ -56,6 +56,6 @@ fn test_comment_custom() {
     let product = extractor::extract_with_scorer(&mut file, &url, &scorer).unwrap();
     assert_eq!(
         product.content,
-        r#"<!DOCTYPE html><html><head><title>This is title</title></head><body><div class="comment">My comment with more than 20 characters.</div></body></html>"#
+        "My div with more than 25 characters.<p>My paragraph with more than 25 characters.</p>"
     );
 }
