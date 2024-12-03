@@ -15,7 +15,7 @@ use std::rc::Rc;
 use url::Url;
 
 const PUNCTUATIONS_REGEX: &str = r"([、。，．！？]|\.[^A-Za-z0-9]|,[^0-9]|!|\?)";
-const UNLIKELY_CANDIDATES: &str = "combx|community|disqus|extra|foot|header|menu\
+const UNLIKELY_CANDIDATES: &str = "combx|comment|community|disqus|extra|foot|header|menu\
      |remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate\
      |pagination|pager|popup|tweet|twitter\
      |ssba";
@@ -55,20 +55,20 @@ pub struct Candidate {
 }
 
 pub struct Scorer<'a> {
-    punctuations: &'a Regex,
-    unlikely_candidates: &'a Regex,
-    likely_candidates: &'a Regex,
-    positive_candidates: &'a Regex,
-    negative_candidates: &'a Regex,
-    block_child_tags: &'a [&'a str],
+    pub punctuations: &'a Regex,
+    pub unlikely_candidates: &'a Regex,
+    pub likely_candidates: &'a Regex,
+    pub positive_candidates: &'a Regex,
+    pub negative_candidates: &'a Regex,
+    pub block_child_tags: &'a [&'a str],
 }
 
 impl<'a> Default for Scorer<'a> {
     fn default() -> Self {
         Self {
             punctuations: &PUNCTUATIONS,
-            unlikely_candidates: &LIKELY,
-            likely_candidates: &UNLIKELY,
+            likely_candidates: &LIKELY,
+            unlikely_candidates: &UNLIKELY,
             positive_candidates: &POSITIVE,
             negative_candidates: &NEGATIVE,
             block_child_tags: &BLOCK_CHILD_TAGS,
@@ -79,8 +79,8 @@ impl<'a> Default for Scorer<'a> {
 impl<'a> Scorer<'a> {
     pub fn new(
         punctuations: &'a Regex,
-        unlikely_candidates: &'a Regex,
         likely_candidates: &'a Regex,
+        unlikely_candidates: &'a Regex,
         positive_candidates: &'a Regex,
         negative_candidates: &'a Regex,
         block_child_tags: &'a [&'a str],
