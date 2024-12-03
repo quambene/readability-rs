@@ -147,7 +147,7 @@ pub fn find_node(handle: Handle, tag_name: &str, nodes: &mut Vec<Rc<Node>>) {
     }
 }
 
-pub fn has_nodes(handle: Handle, tag_names: &Vec<&'static str>) -> bool {
+pub fn has_nodes(handle: Handle, tag_names: &[&str]) -> bool {
     for child in handle.children.borrow().iter() {
         let tag_name: &str = &get_tag_name(child.clone()).unwrap_or_default();
         if tag_names.iter().any(|&n| n == tag_name) {

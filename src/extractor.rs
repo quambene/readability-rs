@@ -1,7 +1,9 @@
+use crate::scorer::{Scorer, DEFAULT_SCORER};
 use dom;
 use error::Error;
 use html5ever::tendril::stream::TendrilSink;
 use html5ever::{parse_document, serialize};
+use log::debug;
 use markup5ever_rcdom::{RcDom, SerializableHandle};
 #[cfg(feature = "reqwest")]
 use reqwest;
@@ -37,7 +39,8 @@ pub fn scrape(url: &str) -> Result<Product, Error> {
     }
 }
 
-pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, Error>
+/// Extract text with a custom [`Scorer`].
+pub fn extract_with_scorer<R>(input: &mut R, url: &Url, scorer: &Scorer) -> Result<Product, Error>
 where
     R: Read,
 {
@@ -48,8 +51,11 @@ where
     let mut candidates = BTreeMap::new();
     let mut nodes = BTreeMap::new();
     let handle = dom.document.clone();
-    scorer::preprocess(&mut dom, handle.clone(), &mut title);
-    scorer::find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
+    scorer.preprocess(&mut dom, handle.clone(), &mut title);
+    scorer.find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
+
+    debug!("Found candidates: {}", candidates.values().len());
+
     let mut id: &str = "/";
     let mut top_candidate: &Candidate = &Candidate {
         node: handle.clone(),
@@ -67,7 +73,7 @@ where
     let mut bytes = vec![];
 
     let node = top_candidate.node.clone();
-    scorer::clean(&mut dom, Path::new(id), node.clone(), url, &candidates);
+    scorer.clean(&mut dom, Path::new(id), node.clone(), url, &candidates);
 
     serialize(
         &mut bytes,
@@ -84,4 +90,12 @@ where
         content,
         text,
     })
+}
+
+/// Extract text with the default [`Scorer`].
+pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, Error>
+where
+    R: Read,
+{
+    extract_with_scorer(input, url, &DEFAULT_SCORER)
 }
