@@ -1,7 +1,9 @@
-use dom;
-use html5ever::tree_builder::TreeSink;
+use crate::dom;
+use html5ever::namespace_url;
 use html5ever::tree_builder::{ElementFlags, NodeOrText};
+use html5ever::{ns, tree_builder::TreeSink};
 use html5ever::{LocalName, QualName};
+use lazy_static::lazy_static;
 use markup5ever_rcdom::Handle;
 use markup5ever_rcdom::Node;
 use markup5ever_rcdom::NodeData::{Comment, Doctype, Document, ProcessingInstruction};
