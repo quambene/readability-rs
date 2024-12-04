@@ -11,13 +11,13 @@ keywords = ["readability"]
 categories = []
 
 [dependencies]
-regex = "1.9"
+regex = "1.11"
 url = "2.4"
 html5ever = "0.26"
 markup5ever_rcdom = "0.2"
 lazy_static = "1.4"
 log = "0.4.22"
-reqwest = { version = "0.11", features = ["blocking", "rustls-tls"], default-features = false, optional = true }
+reqwest = { version = "0.12", features = ["blocking", "rustls-tls"], default-features = false, optional = true }
 
 [features]
 default = ["reqwest"]
