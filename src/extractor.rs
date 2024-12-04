@@ -1,13 +1,13 @@
+use crate::dom;
+use crate::error::Error;
+use crate::scorer;
 use crate::scorer::{Scorer, DEFAULT_SCORER};
-use dom;
-use error::Error;
 use html5ever::tendril::stream::TendrilSink;
 use html5ever::{parse_document, serialize};
 use log::debug;
 use markup5ever_rcdom::{RcDom, SerializableHandle};
 #[cfg(feature = "reqwest")]
 use reqwest;
-use scorer;
 use scorer::Candidate;
 use std::cell::Cell;
 use std::collections::BTreeMap;

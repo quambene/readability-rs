@@ -1,7 +1,3 @@
-extern crate readability;
-extern crate regex;
-extern crate url;
-
 use readability::{extractor, scorer::Scorer};
 use regex::Regex;
 use std::fs::File;
