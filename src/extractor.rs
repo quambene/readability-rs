@@ -1,10 +1,10 @@
 use crate::dom;
-use crate::error::Error;
 use crate::scorer;
 use crate::scorer::{Scorer, DEFAULT_SCORER};
-use html5ever::tendril::stream::TendrilSink;
+use anyhow::anyhow;
 use html5ever::{parse_document, serialize};
-use log::debug;
+use html5ever::{tendril::stream::TendrilSink, ParseOpts};
+use log::{debug, trace};
 use markup5ever_rcdom::{RcDom, SerializableHandle};
 #[cfg(feature = "reqwest")]
 use reqwest;
@@ -26,27 +26,37 @@ pub struct Product {
 }
 
 #[cfg(feature = "reqwest")]
-pub fn scrape(url: &str) -> Result<Product, Error> {
+pub fn scrape(url: &str) -> Result<Product, anyhow::Error> {
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::new(30, 0))
         .build()?;
     let mut res = client.get(url).send()?;
     if res.status().is_success() {
         let url = Url::parse(url)?;
-        extract(&mut res, &url)
+        let product = extract(&mut res, &url)?;
+        Ok(product)
     } else {
-        Err(Error::Unexpected)
+        Err(anyhow!("Can't fetch {url}"))
     }
 }
 
 /// Extract text with a custom [`Scorer`].
-pub fn extract_with_scorer<R>(input: &mut R, url: &Url, scorer: &Scorer) -> Result<Product, Error>
+pub fn extract_with_scorer<R>(
+    input: &mut R,
+    url: &Url,
+    scorer: &Scorer,
+) -> Result<Product, anyhow::Error>
 where
     R: Read,
 {
-    let mut dom = parse_document(RcDom::default(), Default::default())
+    let mut dom = parse_document(RcDom::default(), ParseOpts::default())
         .from_utf8()
         .read_from(input)?;
+
+    if !dom.errors.is_empty() {
+        return Err(anyhow!("Can't parse document: {:?}", dom.errors));
+    }
+
     let mut title = String::new();
     let mut candidates = BTreeMap::new();
     let mut nodes = BTreeMap::new();
@@ -55,6 +65,13 @@ where
     scorer.find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
 
     debug!("Found candidates: {}", candidates.values().len());
+    trace!(
+        "Found candidates: {:?}",
+        candidates
+            .values()
+            .map(|candidate| candidate.node.clone())
+            .collect::<Vec<_>>()
+    );
 
     let mut id: &str = "/";
     let mut top_candidate: &Candidate = &Candidate {
@@ -73,6 +90,9 @@ where
     let mut bytes = vec![];
 
     let node = top_candidate.node.clone();
+
+    debug!("Found top candidate: {node:?}");
+
     scorer.clean(&mut dom, Path::new(id), node.clone(), url, &candidates);
 
     serialize(
@@ -85,6 +105,11 @@ where
 
     let mut text: String = String::new();
     dom::extract_text(node.clone(), &mut text, true);
+
+    debug!("Extracted title: {title}");
+    debug!("Extracted content: {content}");
+    debug!("Extracted text: {text}");
+
     Ok(Product {
         title,
         content,
@@ -93,7 +118,7 @@ where
 }
 
 /// Extract text with the default [`Scorer`].
-pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, Error>
+pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, anyhow::Error>
 where
     R: Read,
 {
