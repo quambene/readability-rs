@@ -322,9 +322,9 @@ impl<'a> Scorer<'a> {
         let score = match tag_name.as_ref() {
             "article" => 10.0,
             "div" => 5.0,
-            "blockquote" => 3.0,
-            "form" => -3.0,
-            "th" => 5.0,
+            "pre" | "td" | "blockquote" => 3.0,
+            "address" | "ol" | "ul" | "dl" | "dd" | "dt" | "li" | "form" => -3.0,
+            "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "th" => -5.0,
             _ => 0.0,
         };
         score + self.get_class_weight(handle.clone())
