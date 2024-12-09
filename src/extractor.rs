@@ -25,6 +25,7 @@ pub struct Product {
     pub text: String,
 }
 
+/// Fetch website and extract content.
 #[cfg(feature = "reqwest")]
 pub fn scrape(url: &str) -> Result<Product, anyhow::Error> {
     let client = reqwest::blocking::Client::builder()
@@ -40,7 +41,7 @@ pub fn scrape(url: &str) -> Result<Product, anyhow::Error> {
     }
 }
 
-/// Extract text with a custom [`Scorer`].
+/// Extract content and text with a custom [`Scorer`].
 pub fn extract_with_scorer<R>(
     input: &mut R,
     url: &Url,
@@ -117,7 +118,7 @@ where
     })
 }
 
-/// Extract text with the default [`Scorer`].
+/// Extract content and text with the default [`Scorer`].
 pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, anyhow::Error>
 where
     R: Read,
