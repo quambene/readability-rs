@@ -114,8 +114,6 @@ pub fn extract_text(handle: Handle, text: &mut String, deep: bool) {
                     if let Some(tag_name) = last_tag_name {
                         if &tag_name == "p" {
                             text.push_str("\n");
-                        } else {
-                            text.push_str(" ");
                         }
                     }
 
