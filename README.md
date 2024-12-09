@@ -1,30 +1,24 @@
-readability-rs
-=============
-
-[![Build Status](https://travis-ci.org/kumabook/readability.svg?branch=master)](https://travis-ci.org/kumabook/readability)
+# readability-rs
 
 readability-rs is a library for extracting the primary readable content of a webpage.
-This is a rust port of arc90's readability project.
-inspired by [kingwkb/readability](https://github.com/kingwkb/readability).
+This is a rust port of arc90's readability project. Inspired by
+[kingwkb/readability](https://github.com/kingwkb/readability), forked from [kumabook/readability](https://github.com/kumabook/readability).
 
+## Hot to use
 
-Hot to use
--------
-
-
-- Add `readability` to dependencies in Cargo.toml
+- Add `readability-rs` to dependencies in Cargo.toml
 
 ```toml
 [dependencies]
-readability = "^0"
+readability-rs = "^0"
 ```
 
 - Then, use it as below
 
 ```rust
 
-extern crate readability;
-use readability::extractor;
+extern crate readability_rs;
+use readability_rs::extractor;
 
 fn main() {
   match extractor::scrape("https://spincoaster.com/chromeo-juice") {
@@ -40,20 +34,10 @@ fn main() {
 
 ```
 
+## Related Projects
 
-Demo
--------
-
-Visit [demo page](http://readability-rs.herokuapp.com/web/index.html).
-
-
-Related Projects
-----------------
-
-- [Demo](https://github.com/kumabook/readability-demo)
 - [ar90-readability ports](https://github.com/masukomi/ar90-readability#ports)
 
-License
--------
+## License
 
 [MIT](LICENSE)
