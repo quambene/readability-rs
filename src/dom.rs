@@ -102,8 +102,7 @@ pub fn has_link(handle: Handle) -> bool {
 
 pub fn extract_text(handle: Handle, text: &mut String, deep: bool) {
     for child in handle.children.borrow().iter() {
-        let c = child.clone();
-        match c.data {
+        match child.data {
             Text { ref contents } => {
                 text.push_str(contents.borrow().as_ref());
             }
