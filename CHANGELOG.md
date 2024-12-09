@@ -6,6 +6,7 @@
   - Fix missing linebreaks for paragraphs conversion from HTML to text
 - changed
   - Make `Scorer` customizable via `extract_with_scorer()`
+  - Improve content score
 
 ### v0.3.0
 
