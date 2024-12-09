@@ -4,6 +4,8 @@
 
 - fixed
   - Fix missing linebreaks for paragraphs conversion from HTML to text
+- added
+  - Add `ReadabilityError`
 - changed
   - Make `Scorer` customizable via `extract_with_scorer()`
   - Improve content score

@@ -1,7 +1,7 @@
 use crate::dom;
+use crate::error::ReadabilityError;
 use crate::scorer;
 use crate::scorer::{Scorer, DEFAULT_SCORER};
-use anyhow::anyhow;
 use html5ever::{parse_document, serialize};
 use html5ever::{tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
@@ -27,7 +27,7 @@ pub struct Product {
 
 /// Fetch website and extract content.
 #[cfg(feature = "reqwest")]
-pub fn scrape(url: &str) -> Result<Product, anyhow::Error> {
+pub fn scrape(url: &str) -> Result<Product, ReadabilityError> {
     let client = reqwest::blocking::Client::builder()
         .timeout(Duration::new(30, 0))
         .build()?;
@@ -37,7 +37,7 @@ pub fn scrape(url: &str) -> Result<Product, anyhow::Error> {
         let product = extract(&mut res, &url)?;
         Ok(product)
     } else {
-        Err(anyhow!("Can't fetch {url}"))
+        Err(ReadabilityError::FetchUrl(url.to_owned()))
     }
 }
 
@@ -46,7 +46,7 @@ pub fn extract_with_scorer<R>(
     input: &mut R,
     url: &Url,
     scorer: &Scorer,
-) -> Result<Product, anyhow::Error>
+) -> Result<Product, ReadabilityError>
 where
     R: Read,
 {
@@ -55,7 +55,7 @@ where
         .read_from(input)?;
 
     if !dom.errors.is_empty() {
-        return Err(anyhow!("Can't parse document: {:?}", dom.errors));
+        return Err(ReadabilityError::ParseHtml(dom.errors));
     }
 
     let mut title = String::new();
@@ -119,7 +119,7 @@ where
 }
 
 /// Extract content and text with the default [`Scorer`].
-pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, anyhow::Error>
+pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, ReadabilityError>
 where
     R: Read,
 {
