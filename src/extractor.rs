@@ -1,21 +1,18 @@
-use crate::dom;
-use crate::error::ReadabilityError;
-use crate::scorer;
-use crate::scorer::{Scorer, DEFAULT_SCORER};
-use html5ever::{parse_document, serialize};
-use html5ever::{tendril::stream::TendrilSink, ParseOpts};
+use crate::{
+    dom,
+    error::ReadabilityError,
+    scorer,
+    scorer::{Scorer, DEFAULT_SCORER},
+};
+use html5ever::{parse_document, serialize, tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
 use markup5ever_rcdom::{RcDom, SerializableHandle};
 #[cfg(feature = "reqwest")]
 use reqwest;
 use scorer::Candidate;
-use std::cell::Cell;
-use std::collections::BTreeMap;
-use std::default::Default;
-use std::io::Read;
-use std::path::Path;
 #[cfg(feature = "reqwest")]
 use std::time::Duration;
+use std::{cell::Cell, collections::BTreeMap, default::Default, io::Read, path::Path};
 use url::Url;
 
 #[derive(Debug)]
@@ -37,7 +34,7 @@ pub fn scrape(url: &str) -> Result<Product, ReadabilityError> {
         let product = extract(&mut res, &url)?;
         Ok(product)
     } else {
-        Err(ReadabilityError::FetchUrl(url.to_owned()))
+        Err(ReadabilityError::FetchUrl)
     }
 }
 

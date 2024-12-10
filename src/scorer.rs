@@ -1,19 +1,17 @@
 use crate::dom;
-use html5ever::namespace_url;
-use html5ever::tree_builder::{ElementFlags, NodeOrText};
-use html5ever::{ns, tree_builder::TreeSink};
-use html5ever::{LocalName, QualName};
+use html5ever::{
+    namespace_url, ns,
+    tree_builder::{ElementFlags, NodeOrText, TreeSink},
+    LocalName, QualName,
+};
 use lazy_static::lazy_static;
-use markup5ever_rcdom::Handle;
-use markup5ever_rcdom::Node;
-use markup5ever_rcdom::NodeData::{Comment, Doctype, Document, ProcessingInstruction};
-use markup5ever_rcdom::NodeData::{Element, Text};
-use markup5ever_rcdom::RcDom;
+use markup5ever_rcdom::{
+    Handle, Node,
+    NodeData::{Comment, Doctype, Document, Element, ProcessingInstruction, Text},
+    RcDom,
+};
 use regex::Regex;
-use std::cell::Cell;
-use std::collections::BTreeMap;
-use std::path::Path;
-use std::rc::Rc;
+use std::{cell::Cell, collections::BTreeMap, path::Path, rc::Rc};
 use url::Url;
 
 const PUNCTUATIONS_REGEX: &str = r"([、。，．！？]|\.[^A-Za-z0-9]|,[^0-9]|!|\?)";
@@ -65,7 +63,7 @@ pub struct Scorer<'a> {
     pub block_child_tags: &'a [&'a str],
 }
 
-impl<'a> Default for Scorer<'a> {
+impl Default for Scorer<'_> {
     fn default() -> Self {
         Self {
             punctuations: &PUNCTUATIONS,

@@ -48,7 +48,7 @@ fn test_extract(
     let mut file = File::open(expected_content).unwrap();
     let mut expected_content = String::new();
     file.read_to_string(&mut expected_content).unwrap();
-    let expected_content = expected_content.replace('\n', "").replace('\r', "");
+    let expected_content = expected_content.replace(['\n', '\r'], "");
     assert_eq!(product.content, expected_content);
 
     let mut file = File::open(expected_text).unwrap();
