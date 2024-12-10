@@ -1,7 +1,6 @@
 #[cfg(feature = "reqwest")]
 use reqwest;
-use std::borrow::Cow;
-use std::io;
+use std::{borrow::Cow, io};
 use thiserror::Error;
 use url;
 

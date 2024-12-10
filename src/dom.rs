@@ -1,9 +1,9 @@
-use html5ever::tendril::StrTendril;
-use html5ever::Attribute;
-use markup5ever_rcdom::NodeData::{Element, Text};
-use markup5ever_rcdom::{Handle, Node};
-use std::rc::Rc;
-use std::str::FromStr;
+use html5ever::{tendril::StrTendril, Attribute};
+use markup5ever_rcdom::{
+    Handle, Node,
+    NodeData::{Element, Text},
+};
+use std::{rc::Rc, str::FromStr};
 
 pub fn get_tag_name(handle: Handle) -> Option<String> {
     match handle.data {
