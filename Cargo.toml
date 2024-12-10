@@ -2,13 +2,15 @@
 name = "readability"
 version = "0.4.0"
 edition = "2021"
-authors = ["Hiroki Kumamoto <kumabook@live.jp>"]
-license = "MIT"
-homepage = "https://github.com/kumabook/readability"
-repository = "https://github.com/kumabook/readability.git"
+authors = ["Hiroki Kumamoto <kumabook@live.jp>", "quambene <contact.quambene@gmail.com>"]
 description = "Port of arc90's readability project to rust"
-keywords = ["readability"]
-categories = []
+homepage = "https://github.com/quambene/readability-rs"
+repository = "https://github.com/quambene/readability-rs"
+documentation = "https://docs.rs/readability-rs"
+keywords = ["readability", "text", "html", "converter"]
+categories = ["text-processing"]
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 regex = "1.11"
