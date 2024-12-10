@@ -37,7 +37,7 @@ pub fn scrape(url: &str) -> Result<Product, ReadabilityError> {
         let product = extract(&mut res, &url)?;
         Ok(product)
     } else {
-        Err(ReadabilityError::FetchUrl(url.to_owned()))
+        Err(ReadabilityError::FetchUrl)
     }
 }
 
