@@ -1,7 +1,8 @@
 # Readability – Extract text from HTML
 
-[![Latest Version](https://img.shields.io/crates/v/readability-rs.svg)](https://crates.io/crates/readability-rs)
-[![Build Status](https://github.com/quambene/readability-rs/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/quambene/readability-rs/actions/workflows/rust-ci.yml)
+[![latest version](https://img.shields.io/crates/v/readability-rs.svg)](https://crates.io/crates/readability-rs)
+[![documentation](https://docs.rs/readability-rs/badge.svg)](https://docs.rs/readability-rs/)
+[![build status](https://github.com/quambene/readability-rs/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/quambene/readability-rs/actions/workflows/rust-ci.yml)
 
 Readability is a library for extracting the readable content of a
 webpage. This project is a rust port of arc90's readability project, and forked from
