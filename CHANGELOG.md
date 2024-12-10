@@ -3,7 +3,7 @@
 ### v0.4.0
 
 - fixed
-  - Fix missing linebreaks for paragraphs conversion from HTML to text
+  - Fix missing linebreaks for paragraph conversion
 - added
   - Add `ReadabilityError`
 - changed
