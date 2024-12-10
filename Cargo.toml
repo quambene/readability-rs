@@ -1,5 +1,5 @@
 [package]
-name = "readability"
+name = "readability-rs"
 version = "0.4.0"
 edition = "2021"
 authors = ["Hiroki Kumamoto <kumabook@live.jp>", "quambene <contact.quambene@gmail.com>"]
@@ -11,6 +11,10 @@ keywords = ["readability", "text", "html", "converter"]
 categories = ["text-processing"]
 readme = "README.md"
 license = "MIT"
+
+[lib]
+path = "src/lib.rs"
+name = "readability"
 
 [dependencies]
 regex = "1.11"
