@@ -100,16 +100,26 @@ pub fn has_link(handle: Handle) -> bool {
     false
 }
 
+/// Convert HTML to formatted text, including linebreaks and whitespaces.
 pub fn extract_text(handle: Handle, text: &mut String, deep: bool) {
+    let mut last_tag_name = None;
+
     for child in handle.children.borrow().iter() {
-        let c = child.clone();
-        match c.data {
+        match child.data {
             Text { ref contents } => {
                 text.push_str(contents.borrow().as_ref());
             }
             Element { .. } => {
                 if deep {
+                    if let Some(tag_name) = last_tag_name {
+                        if &tag_name == "p" {
+                            text.push_str("\n");
+                        }
+                    }
+
                     extract_text(child.clone(), text, deep);
+
+                    last_tag_name = get_tag_name(child.clone());
                 }
             }
             _ => (),

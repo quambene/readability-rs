@@ -18,6 +18,11 @@ markup5ever_rcdom = "0.2"
 lazy_static = "1.4"
 log = "0.4.22"
 reqwest = { version = "0.12", features = ["blocking", "rustls-tls"], default-features = false, optional = true }
+thiserror = "2.0.6"
+
+[dev-dependencies]
+env_logger = "0.11.5"
+rstest = "0.23.0"
 
 [features]
 default = ["reqwest"]
