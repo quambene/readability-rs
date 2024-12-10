@@ -63,7 +63,7 @@ pub struct Scorer<'a> {
     pub block_child_tags: &'a [&'a str],
 }
 
-impl<'a> Default for Scorer<'a> {
+impl Default for Scorer<'_> {
     fn default() -> Self {
         Self {
             punctuations: &PUNCTUATIONS,
