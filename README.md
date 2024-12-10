@@ -1,4 +1,4 @@
-# Readability – Extract text from HTML
+# Readability – Convert HTML to text
 
 [![latest version](https://img.shields.io/crates/v/readability-rs.svg)](https://crates.io/crates/readability-rs)
 [![documentation](https://docs.rs/readability-rs/badge.svg)](https://docs.rs/readability-rs/)
@@ -6,7 +6,7 @@
 [![dependency status](https://deps.rs/repo/github/quambene/readability-rs/status.svg)](https://deps.rs/repo/github/quambene/readability-rs)
 
 Readability is a library for extracting the readable content of a
-webpage. This project is a rust port of arc90's readability project, and forked from
+webpage. This library is a rust port of arc90's readability project, and forked from
 [kumabook/readability](https://github.com/kumabook/readability).
 
 ## Related Projects
