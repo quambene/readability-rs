@@ -9,6 +9,7 @@
 - changed
   - Make `Scorer` customizable via `extract_with_scorer()`
   - Improve content score
+  - Upgrade to 2021 edition
 
 ### v0.3.0
 
