@@ -1,5 +1,6 @@
 # Readability – Extract text from HTML
 
+[![Latest Version](https://img.shields.io/crates/v/bogrep.svg)](https://crates.io/crates/readability-rs)
 [![Build Status](https://github.com/quambene/readability-rs/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/quambene/readability-rs/actions/workflows/rust-ci.yml)
 
 Readability is a library for extracting the readable content of a
