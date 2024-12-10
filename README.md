@@ -1,14 +1,8 @@
 # readability-rs
 
 Readability is a library for extracting the readable content of a
-webpage. This is a rust port of arc90's readability project, and forked from
+webpage. This project is a rust port of arc90's readability project, and forked from
 [kumabook/readability](https://github.com/kumabook/readability).
-
-## Usage
-
-``` rust
-
-```
 
 ## Related Projects
 
@@ -16,4 +10,4 @@ webpage. This is a rust port of arc90's readability project, and forked from
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the [MIT license](https://github.com/quambene/readability-rs/blob/main/LICENSE).
