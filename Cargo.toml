@@ -1,6 +1,6 @@
 [package]
 name = "readability"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Hiroki Kumamoto <kumabook@live.jp>"]
 license = "MIT"

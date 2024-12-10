@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD041 MD034 -->
 
-### v0.4.0 (unreleased)
+### v0.4.0
 
 - fixed
   - Fix missing linebreaks for paragraphs conversion from HTML to text
