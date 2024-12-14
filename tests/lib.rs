@@ -37,6 +37,7 @@ fn test_extract(#[case] test_name: &str, #[case] url: &str) {
     let input_path = data_path.join("input.html");
     let expected_content_path = data_path.join("expected.html");
     let expected_text_path = data_path.join("expected.txt");
+    let expected_title_path = data_path.join("expected_title.txt");
 
     let mut file = File::open(input_path).unwrap();
     let url = Url::parse(url).unwrap();
@@ -52,6 +53,11 @@ fn test_extract(#[case] test_name: &str, #[case] url: &str) {
     let mut expected_text = String::new();
     file.read_to_string(&mut expected_text).unwrap();
     assert_eq!(product.text, expected_text);
+
+    let mut file = File::open(expected_title_path).unwrap();
+    let mut expected_title = String::new();
+    file.read_to_string(&mut expected_title).unwrap();
+    assert_eq!(product.title, expected_title);
 }
 
 #[rstest]
@@ -63,6 +69,7 @@ fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
     let input_path = data_path.join("input.html");
     let expected_content_path = data_path.join("expected_with_scorer.html");
     let expected_text_path = data_path.join("expected_with_scorer.txt");
+    let expected_title_path = data_path.join("expected_title.txt");
 
     let mut file = File::open(input_path).unwrap();
     let url = Url::parse(url).unwrap();
@@ -85,6 +92,11 @@ fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
     let mut expected_text = String::new();
     file.read_to_string(&mut expected_text).unwrap();
     assert_eq!(product.text, expected_text);
+
+    let mut file = File::open(expected_title_path).unwrap();
+    let mut expected_title = String::new();
+    file.read_to_string(&mut expected_title).unwrap();
+    assert_eq!(product.title, expected_title);
 }
 
 #[test]
