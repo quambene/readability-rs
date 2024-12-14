@@ -9,6 +9,9 @@ Readability is a library for extracting the readable content of a
 webpage. This library is a rust port of arc90's readability project, and forked from
 [kumabook/readability](https://github.com/kumabook/readability).
 
+The goal of `readability-rs` is to be compatible with the test suite of the
+[Mozilla implementation](https://github.com/mozilla/readability) of Readability.
+
 ## Related Projects
 
 - [ar90-readability ports](https://github.com/masukomi/ar90-readability#ports)
