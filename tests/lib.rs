@@ -1,7 +1,6 @@
 use log::LevelFilter;
 use readability::{
-    extractor::{extract, extract_with_scorer},
-    scorer::Scorer,
+    Scorer, {extract, extract_with_scorer},
 };
 use regex::Regex;
 use rstest::rstest;
