@@ -4,6 +4,8 @@
 
 - fixed
   - Fix `ParseHtml` errors
+- changed
+  - Change public visibility of API
 - removed
   - Remove `scrape()`
 
