@@ -7,11 +7,7 @@ use crate::{
 use html5ever::{parse_document, serialize, tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
 use markup5ever_rcdom::{RcDom, SerializableHandle};
-#[cfg(feature = "reqwest")]
-use reqwest;
 use scorer::Candidate;
-#[cfg(feature = "reqwest")]
-use std::time::Duration;
 use std::{cell::Cell, collections::BTreeMap, default::Default, io::Read, path::Path};
 use url::Url;
 
@@ -20,22 +16,6 @@ pub struct Product {
     pub title: String,
     pub content: String,
     pub text: String,
-}
-
-/// Fetch website and extract content.
-#[cfg(feature = "reqwest")]
-pub fn scrape(url: &str) -> Result<Product, ReadabilityError> {
-    let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::new(30, 0))
-        .build()?;
-    let mut res = client.get(url).send()?;
-    if res.status().is_success() {
-        let url = Url::parse(url)?;
-        let product = extract(&mut res, &url)?;
-        Ok(product)
-    } else {
-        Err(ReadabilityError::FetchUrl)
-    }
 }
 
 /// Extract content and text with a custom [`Scorer`].

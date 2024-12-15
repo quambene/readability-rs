@@ -4,6 +4,8 @@
 
 - fixed
   - Fix `ParseHtml` errors
+- removed
+  - Remove `scrape()`
 
 ### v0.4.0
 
