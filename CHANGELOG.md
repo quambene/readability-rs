@@ -1,5 +1,10 @@
 <!-- markdownlint-disable MD041 MD034 -->
 
+### v0.5.0
+
+- fixed
+  - Fix `ParseHtml` errors
+
 ### v0.4.0
 
 - fixed

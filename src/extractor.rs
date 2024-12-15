@@ -51,10 +51,6 @@ where
         .from_utf8()
         .read_from(input)?;
 
-    if !dom.errors.is_empty() {
-        return Err(ReadabilityError::ParseHtml(dom.errors));
-    }
-
     let mut title = String::new();
     let mut candidates = BTreeMap::new();
     let mut nodes = BTreeMap::new();
