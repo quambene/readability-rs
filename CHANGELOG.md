@@ -7,7 +7,7 @@
 - added
   - Add `ExtractOptions` to `extract()`
 - changed
-  - Change public visibility of API
+  - Restrict public interface
   - Make strict parsing configurable in `ParseOptions`
 - removed
   - Remove `scrape()`
