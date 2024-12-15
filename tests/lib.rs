@@ -1,7 +1,5 @@
 use log::LevelFilter;
-use readability::{
-    Scorer, {extract, extract_with_scorer},
-};
+use readability::{extract, ExtractOptions, ParseOptions};
 use regex::Regex;
 use rstest::rstest;
 use std::{
@@ -40,7 +38,7 @@ fn test_extract(#[case] test_name: &str, #[case] url: &str) {
 
     let mut file = File::open(input_path).unwrap();
     let url = Url::parse(url).unwrap();
-    let product = extract(&mut file, &url).unwrap();
+    let product = extract(&mut file, &url, Default::default()).unwrap();
 
     let mut file = File::open(expected_content_path).unwrap();
     let mut expected_content = String::new();
@@ -62,6 +60,8 @@ fn test_extract(#[case] test_name: &str, #[case] url: &str) {
 #[rstest]
 #[case::comments("comments", "https://example.com")]
 fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
+    use readability::{ExtractOptions, ScorerOptions};
+
     init_logger();
 
     let data_path = Path::new("./data").join(test_name);
@@ -72,14 +72,14 @@ fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
 
     let mut file = File::open(input_path).unwrap();
     let url = Url::parse(url).unwrap();
-    let scorer = Scorer {
+    let options = ExtractOptions { parse_options: Default::default(), scorer_options: ScorerOptions {
         unlikely_candidates: &Regex::new(
             "combx|community|disqus|extra|foot|header|menu|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|ssba",
         )
         .unwrap(),
         ..Default::default()
-    };
-    let product = extract_with_scorer(&mut file, &url, &scorer).unwrap();
+    }};
+    let product = extract(&mut file, &url, options).unwrap();
 
     let mut file = File::open(expected_content_path).unwrap();
     let mut expected_content = String::new();
@@ -111,8 +111,12 @@ fn test_extract_malformed() {
         "#;
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
+    let options = ExtractOptions {
+        parse_options: ParseOptions { strict: true },
+        ..Default::default()
+    };
 
-    let result = extract(&mut input, &url);
+    let result = extract(&mut input, &url, options);
     assert!(result.is_err());
 }
 
@@ -121,8 +125,12 @@ fn test_extract_empty() {
     let html: &str = "";
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
+    let options = ExtractOptions {
+        parse_options: ParseOptions { strict: true },
+        ..Default::default()
+    };
 
-    let result = extract(&mut input, &url);
+    let result = extract(&mut input, &url, options);
     assert!(result.is_err());
 }
 
@@ -141,7 +149,7 @@ fn test_extract_basic() {
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
 
-    let result = extract(&mut input, &url).unwrap();
+    let result = extract(&mut input, &url, Default::default()).unwrap();
     assert_eq!(result.title, "Test Title");
     assert_eq!(result.content, "<p>This is a test paragraph.</p>");
     assert_eq!(result.text, "This is a test paragraph.");
@@ -164,7 +172,7 @@ fn test_extract_large_html() {
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
 
-    let result = extract(&mut input, &url).unwrap();
+    let result = extract(&mut input, &url, Default::default()).unwrap();
     assert_eq!(result.title, "Large HTML Test");
     assert_eq!(result.text.matches("Repeated content.").count(), 1000);
 }

@@ -46,7 +46,6 @@ lazy_static! {
     static ref UNLIKELY: Regex = Regex::new(UNLIKELY_CANDIDATES).unwrap();
     static ref POSITIVE: Regex = Regex::new(POSITIVE_CANDIDATES).unwrap();
     static ref NEGATIVE: Regex = Regex::new(NEGATIVE_CANDIDATES).unwrap();
-    pub static ref DEFAULT_SCORER: Scorer<'static> = Scorer::default();
 }
 
 pub struct Candidate {
@@ -54,7 +53,8 @@ pub struct Candidate {
     pub score: Cell<f32>,
 }
 
-pub struct Scorer<'a> {
+#[derive(Debug)]
+pub struct ScorerOptions<'a> {
     pub punctuations: &'a Regex,
     pub unlikely_candidates: &'a Regex,
     pub likely_candidates: &'a Regex,
@@ -63,7 +63,7 @@ pub struct Scorer<'a> {
     pub block_child_tags: &'a [&'a str],
 }
 
-impl Default for Scorer<'_> {
+impl Default for ScorerOptions<'_> {
     fn default() -> Self {
         Self {
             punctuations: &PUNCTUATIONS,
@@ -76,23 +76,13 @@ impl Default for Scorer<'_> {
     }
 }
 
+pub struct Scorer<'a> {
+    pub options: ScorerOptions<'a>,
+}
+
 impl<'a> Scorer<'a> {
-    pub fn new(
-        punctuations: &'a Regex,
-        likely_candidates: &'a Regex,
-        unlikely_candidates: &'a Regex,
-        positive_candidates: &'a Regex,
-        negative_candidates: &'a Regex,
-        block_child_tags: &'a [&'a str],
-    ) -> Self {
-        Scorer {
-            punctuations,
-            unlikely_candidates,
-            likely_candidates,
-            positive_candidates,
-            negative_candidates,
-            block_child_tags,
-        }
+    pub fn new(options: ScorerOptions<'a>) -> Self {
+        Scorer { options }
     }
 
     pub fn preprocess(&self, dom: &mut RcDom, handle: Handle, title: &mut String) -> bool {
@@ -111,8 +101,8 @@ impl<'a> Scorer<'a> {
             for name in ["id", "class"].iter() {
                 if let Some(val) = dom::attr(name, &attrs.borrow()) {
                     if tag_name != "body"
-                        && self.unlikely_candidates.is_match(&val)
-                        && !self.likely_candidates.is_match(&val)
+                        && self.options.unlikely_candidates.is_match(&val)
+                        && !self.options.likely_candidates.is_match(&val)
                     {
                         return true;
                     }
@@ -289,7 +279,7 @@ impl<'a> Scorer<'a> {
         let mut score: f32 = 1.0;
         let mut text = String::new();
         dom::extract_text(handle.clone(), &mut text, true);
-        let mat = self.punctuations.find_iter(&text);
+        let mat = self.options.punctuations.find_iter(&text);
         score += mat.count() as f32;
         score += f32::min(f32::floor(text.chars().count() as f32 / 100.0), 3.0);
         score
@@ -303,10 +293,10 @@ impl<'a> Scorer<'a> {
         {
             for name in ["id", "class"].iter() {
                 if let Some(val) = dom::attr(name, &attrs.borrow()) {
-                    if self.positive_candidates.is_match(&val) {
+                    if self.options.positive_candidates.is_match(&val) {
                         weight += 25.0
                     };
-                    if self.negative_candidates.is_match(&val) {
+                    if self.options.negative_candidates.is_match(&val) {
                         weight -= 25.0
                     }
                 }
@@ -417,7 +407,7 @@ impl<'a> Scorer<'a> {
         match n {
             "p" => true,
             "div" | "article" | "center" | "section" => {
-                !dom::has_nodes(handle.clone(), self.block_child_tags)
+                !dom::has_nodes(handle.clone(), self.options.block_child_tags)
             }
             _ => false,
         }

@@ -1,8 +1,7 @@
 use crate::{
     dom,
     error::ReadabilityError,
-    scorer,
-    scorer::{Scorer, DEFAULT_SCORER},
+    scorer::{self, Scorer, ScorerOptions},
 };
 use html5ever::{parse_document, serialize, tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
@@ -18,11 +17,22 @@ pub struct Product {
     pub text: String,
 }
 
+#[derive(Debug, Default)]
+pub struct ExtractOptions<'a> {
+    pub parse_options: ParseOptions,
+    pub scorer_options: ScorerOptions<'a>,
+}
+
+#[derive(Debug, Default)]
+pub struct ParseOptions {
+    pub strict: bool,
+}
+
 /// Extract content and text with a custom [`Scorer`].
-pub fn extract_with_scorer<R>(
+pub fn extract<R>(
     input: &mut R,
     url: &Url,
-    scorer: &Scorer,
+    opts: ExtractOptions,
 ) -> Result<Product, ReadabilityError>
 where
     R: Read,
@@ -31,10 +41,15 @@ where
         .from_utf8()
         .read_from(input)?;
 
+    if opts.parse_options.strict && !dom.errors.is_empty() {
+        return Err(ReadabilityError::ParseHtml(dom.errors));
+    }
+
     let mut title = String::new();
     let mut candidates = BTreeMap::new();
     let mut nodes = BTreeMap::new();
     let handle = dom.document.clone();
+    let scorer = Scorer::new(opts.scorer_options);
     scorer.preprocess(&mut dom, handle.clone(), &mut title);
     scorer.find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
 
@@ -89,12 +104,4 @@ where
         content,
         text,
     })
-}
-
-/// Extract content and text with the default [`Scorer`].
-pub fn extract<R>(input: &mut R, url: &Url) -> Result<Product, ReadabilityError>
-where
-    R: Read,
-{
-    extract_with_scorer(input, url, &DEFAULT_SCORER)
 }

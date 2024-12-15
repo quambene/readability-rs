@@ -4,8 +4,11 @@
 
 - fixed
   - Fix `ParseHtml` errors
+- added
+  - Add `ExtractOptions` to `extract()`
 - changed
   - Change public visibility of API
+  - Make strict parsing configurable in `ParseOptions`
 - removed
   - Remove `scrape()`
 
