@@ -85,6 +85,7 @@ pub fn extract_content(dom: &mut RcDom, url: &Url, opts: ExtractOptions) -> Cont
     let mut nodes = BTreeMap::new();
     let handle = dom.document.clone();
     let scorer = Scorer::new(opts.scorer_options);
+
     scorer.preprocess(dom, handle.clone(), &mut title);
     scorer.find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
 
@@ -106,20 +107,19 @@ pub fn extract_content(dom: &mut RcDom, url: &Url, opts: ExtractOptions) -> Cont
             },
         )
     });
-    let node = top_candidate.node();
 
-    debug!("Found top candidate: {node:?}");
+    debug!("Found top candidate: {:?}", top_candidate.node().data);
 
     scorer.clean(
         dom,
         Path::new(top_candidate.id()),
-        node.clone(),
+        top_candidate.node().clone(),
         url,
         &candidates,
     );
 
     Content {
-        node: node.clone(),
+        node: top_candidate.node().clone(),
         title,
     }
 }
