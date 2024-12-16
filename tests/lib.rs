@@ -54,7 +54,7 @@ fn test_extract_with_options(
 }
 
 #[rstest]
-#[case::comments("comments", "https://example.com")]
+#[case::comments("comment", "https://example.com")]
 #[case::url("url", "https://example.com")]
 fn test_extract(#[case] test_name: &str, #[case] url: &str) {
     init_logger();
@@ -77,8 +77,8 @@ fn test_extract(#[case] test_name: &str, #[case] url: &str) {
 }
 
 #[rstest]
-#[case::hn("hn", "https://example.com")]
-#[case::comments("comments", "https://example.com")]
+#[case::hn("comments", "https://example.com")]
+#[case::comments("comment", "https://example.com")]
 fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
     use readability::{ExtractOptions, ScorerOptions};
 
