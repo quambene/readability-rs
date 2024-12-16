@@ -45,6 +45,7 @@ pub fn debug_candidate(candidate: &Candidate) -> Option<CandidateTag> {
     }
 }
 
+#[allow(dead_code)]
 pub fn debug_node(node: &Handle) -> Option<(&str, Vec<(String, String)>)> {
     if let NodeData::Element { name, attrs, .. } = &node.data {
         Some((
