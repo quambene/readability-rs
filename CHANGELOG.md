@@ -9,6 +9,7 @@
 - changed
   - Restrict public interface
   - Make strict parsing configurable in `ParseOptions`
+  - Make `ScorerOptions::min_candidate_length` configurable
 - removed
   - Remove `scrape()`
 

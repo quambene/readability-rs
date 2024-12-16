@@ -86,6 +86,8 @@ impl<'a> TopCandidate<'a> {
 
 #[derive(Debug)]
 pub struct ScorerOptions<'a> {
+    /// The minimum word length of candidates.
+    pub min_candidate_length: usize,
     pub punctuations: &'a Regex,
     pub unlikely_candidates: &'a Regex,
     pub likely_candidates: &'a Regex,
@@ -97,6 +99,7 @@ pub struct ScorerOptions<'a> {
 impl Default for ScorerOptions<'_> {
     fn default() -> Self {
         Self {
+            min_candidate_length: 20,
             punctuations: &PUNCTUATIONS,
             likely_candidates: &LIKELY,
             unlikely_candidates: &UNLIKELY,
@@ -455,7 +458,7 @@ impl<'a> Scorer<'a> {
 
     fn is_candidate(&self, handle: Handle) -> bool {
         let text_len = dom::text_len(handle.clone());
-        if text_len < 20 {
+        if text_len < self.options.min_candidate_length {
             return false;
         }
         let n: &str = &dom::get_tag_name(handle.clone()).unwrap_or_default();
