@@ -15,6 +15,7 @@ use std::{borrow::Cow, cell::Cell, collections::BTreeMap, path::Path, rc::Rc};
 use url::Url;
 
 const PUNCTUATIONS_REGEX: &str = r"([、。，．！？]|\.[^A-Za-z0-9]|,[^0-9]|!|\?)";
+// TODO: remove "comment" from unlikely candidates
 const UNLIKELY_CANDIDATES: &str = "combx|comment|community|disqus|extra|foot|header|menu\
      |remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate\
      |pagination|pager|popup|tweet|twitter\
@@ -23,6 +24,7 @@ const LIKELY_CANDIDATES: &str = "and|article|body|column|main|shadow\
                                               |content|hentry";
 const POSITIVE_CANDIDATES: &str = "article|body|content|entry|hentry|main|page\
      |pagination|post|text|blog|story";
+// TODO: remove "comment" and "com" from unlikely candidates
 const NEGATIVE_CANDIDATES: &str = "combx|comment|com|contact|foot|footer|footnote\
      |masthead|media|meta|outbrain|promo|related\
      |scroll|shoutbox|sidebar|sponsor|shopping\
@@ -186,48 +188,77 @@ impl<'a> Scorer<'a> {
         false
     }
 
-    /// Find candidate tags in DOM node, and distribute score among current as
-    /// well as parent nodes.
+    /// Find candidate tags in DOM node, and distribute score among them.
     pub fn find_candidates(
         &self,
-        id: &Path,
+        candidate_id: &Path,
         handle: Handle,
         candidates: &mut BTreeMap<String, Candidate>,
         nodes: &mut BTreeMap<String, Rc<Node>>,
     ) {
-        if let Some(id) = id.to_str().map(|id| id.to_string()) {
+        if let Some(id) = candidate_id
+            .to_str()
+            .map(|candidate_id| candidate_id.to_string())
+        {
             nodes.insert(id, handle.clone());
         }
 
         if self.is_candidate(handle.clone()) {
-            let score = self.calc_content_score(handle.clone());
-            if let Some(c) = id
-                .to_str()
-                .map(|id| id.to_string())
-                .and_then(|id| candidates.get(&id))
-            {
-                c.score.set(c.score.get() + score)
-            }
+            let score = self.calculate_content_score(handle.clone());
 
-            if let Some(c) = id
-                .parent()
-                .and_then(|pid| self.find_or_create_candidate(pid, candidates, nodes))
-            {
-                c.score.set(c.score.get() + score)
-            }
+            let mut current = Some(candidate_id.to_path_buf());
+            let mut level = 1;
 
-            if let Some(c) = id
-                .parent()
-                .and_then(|pid| pid.parent())
-                .and_then(|gpid| self.find_or_create_candidate(gpid, candidates, nodes))
-            {
-                c.score.set(c.score.get() + score / 2.0)
+            // Traverse all parent nodes and distribute scores
+            while let Some(current_id) = current {
+                if let Some(candidate) =
+                    current_id.to_str().map(|id| id.to_string()).and_then(|id| {
+                        // Only parent nodes are valid candidates
+                        if current_id != candidate_id {
+                            self.find_or_create_candidate(&Path::new(&id), candidates, nodes)
+                        } else {
+                            None
+                        }
+                    })
+                {
+                    candidate
+                        .score
+                        .set(candidate.score.get() + score / level as f32);
+                }
+                current = current_id.parent().map(|p| p.to_path_buf());
+                level += 1;
             }
         }
 
+        // if self.is_candidate(handle.clone()) {
+        //     let score = self.calc_content_score(handle.clone());
+        //     if let Some(c) = id
+        //         .to_str()
+        //         .map(|id| id.to_string())
+        //         .and_then(|id| candidates.get(&id))
+        //     {
+        //         c.score.set(c.score.get() + score)
+        //     }
+
+        //     if let Some(c) = id
+        //         .parent()
+        //         .and_then(|pid| self.find_or_create_candidate(pid, candidates, nodes))
+        //     {
+        //         c.score.set(c.score.get() + score)
+        //     }
+
+        //     if let Some(c) = id
+        //         .parent()
+        //         .and_then(|pid| pid.parent())
+        //         .and_then(|gpid| self.find_or_create_candidate(gpid, candidates, nodes))
+        //     {
+        //         c.score.set(c.score.get() + score / 2.0)
+        //     }
+        // }
+
         for (i, child) in handle.children.borrow().iter().enumerate() {
             self.find_candidates(
-                id.join(i.to_string()).as_path(),
+                candidate_id.join(i.to_string()).as_path(),
                 child.clone(),
                 candidates,
                 nodes,
@@ -316,7 +347,7 @@ impl<'a> Scorer<'a> {
         useless
     }
 
-    fn calc_content_score(&self, handle: Handle) -> f32 {
+    fn calculate_content_score(&self, handle: Handle) -> f32 {
         let mut score: f32 = 1.0;
         let mut text = String::new();
         dom::extract_text(handle.clone(), &mut text, true);
@@ -529,15 +560,15 @@ mod tests {
 
         scorer.find_candidates(Path::new("/"), dom.document, &mut candidates, &mut nodes);
 
-        assert_eq!(candidates.len(), 2);
-
         let tags = dbg!(debug_candidates(&candidates));
 
+        assert_eq!(candidates.len(), 3);
+
         assert!(candidates.contains_key("/1"));
-        assert!(tags.contains(&CandidateTag::new("html", None, 0.5)));
+        assert!(tags.contains(&CandidateTag::new("html", None, 0.33333334)));
 
         assert!(candidates.contains_key("/1/2"));
-        assert!(tags.contains(&CandidateTag::new("body", None, 1.0)));
+        assert!(tags.contains(&CandidateTag::new("body", None, 0.5)));
     }
 
     #[test]
@@ -546,7 +577,14 @@ mod tests {
         let mut html = String::new();
         file.read_to_string(&mut html).unwrap();
 
-        let options = ScorerOptions::default();
+        let options = ScorerOptions {
+            unlikely_candidates: &Regex::new(
+                "combx|community|disqus|extra|foot|header|menu|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|ssba",
+            )
+            .unwrap(),
+            negative_candidates: &Regex::new("combx|contact|foot|footer|footnote|masthead|media|meta|outbrain|promo|related|scroll|shoutbox|sidebar|sponsor|shopping|tags|tool|widget|form|textfield|uiScale|hidden").unwrap(),
+            ..Default::default()
+        };
         let scorer = Scorer::new(options);
         let dom = parse_document(RcDom::default(), Default::default())
             .from_utf8()
@@ -559,9 +597,10 @@ mod tests {
         let mut nodes = BTreeMap::new();
 
         scorer.find_candidates(Path::new("/"), dom.document, &mut candidates, &mut nodes);
-        assert_eq!(candidates.len(), 6);
 
         let tags = dbg!(debug_candidates(&candidates));
+
+        assert_eq!(candidates.len(), 20);
 
         assert!(tags.contains(&CandidateTag::new("div", Some("comment_1"), -44.5)));
         assert!(tags.contains(&CandidateTag::new("div", Some("comment_2"), -44.5)));
