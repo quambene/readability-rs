@@ -1,6 +1,5 @@
 use std::{borrow::Cow, io};
 use thiserror::Error;
-use url;
 
 #[derive(Debug, Error)]
 pub enum ReadabilityError {
