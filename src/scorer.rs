@@ -230,32 +230,6 @@ impl<'a> Scorer<'a> {
             }
         }
 
-        // if self.is_candidate(handle.clone()) {
-        //     let score = self.calc_content_score(handle.clone());
-        //     if let Some(c) = id
-        //         .to_str()
-        //         .map(|id| id.to_string())
-        //         .and_then(|id| candidates.get(&id))
-        //     {
-        //         c.score.set(c.score.get() + score)
-        //     }
-
-        //     if let Some(c) = id
-        //         .parent()
-        //         .and_then(|pid| self.find_or_create_candidate(pid, candidates, nodes))
-        //     {
-        //         c.score.set(c.score.get() + score)
-        //     }
-
-        //     if let Some(c) = id
-        //         .parent()
-        //         .and_then(|pid| pid.parent())
-        //         .and_then(|gpid| self.find_or_create_candidate(gpid, candidates, nodes))
-        //     {
-        //         c.score.set(c.score.get() + score / 2.0)
-        //     }
-        // }
-
         for (i, child) in handle.children.borrow().iter().enumerate() {
             self.find_candidates(
                 candidate_id.join(i.to_string()).as_path(),
