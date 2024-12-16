@@ -69,8 +69,8 @@ where
     let content_string = String::from_utf8(bytes).unwrap_or_default();
 
     debug!("Extracted title: {}", content.title);
-    debug!("Extracted text: {text}");
-    debug!("Extracted content: {content_string}");
+    trace!("Extracted text: {text}");
+    trace!("Extracted content: {content_string}");
 
     Ok(Readable {
         title: content.title,
