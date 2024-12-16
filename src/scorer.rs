@@ -186,6 +186,8 @@ impl<'a> Scorer<'a> {
         false
     }
 
+    /// Find candidate tags in DOM node, and distribute score among current as
+    /// well as parent nodes.
     pub fn find_candidates(
         &self,
         id: &Path,
@@ -200,45 +202,26 @@ impl<'a> Scorer<'a> {
         if self.is_candidate(handle.clone()) {
             let score = self.calc_content_score(handle.clone());
             if let Some(c) = id
-                .parent()
-                .and_then(|pid| self.find_or_create_candidate(pid, candidates, nodes))
-            {
-                c.score.set(c.score.get() + score)
-            }
-            if let Some(c) = id
-                .parent()
-                .and_then(|pid| pid.parent())
-                .and_then(|gpid| self.find_or_create_candidate(gpid, candidates, nodes))
-            {
-                c.score.set(c.score.get() + score / 2.0)
-            }
-        }
-
-        if self.is_candidate(handle.clone()) {
-            let score = self.calc_content_score(handle.clone());
-            if let Some(c) = id
                 .to_str()
                 .map(|id| id.to_string())
                 .and_then(|id| candidates.get(&id))
             {
                 c.score.set(c.score.get() + score)
             }
+
             if let Some(c) = id
                 .parent()
-                .and_then(|pid| pid.to_str())
-                .map(|id| id.to_string())
-                .and_then(|pid| candidates.get(&pid))
+                .and_then(|pid| self.find_or_create_candidate(pid, candidates, nodes))
             {
                 c.score.set(c.score.get() + score)
             }
+
             if let Some(c) = id
                 .parent()
-                .and_then(|p| p.parent())
-                .and_then(|pid| pid.to_str())
-                .map(|id| id.to_string())
-                .and_then(|pid| candidates.get(&pid))
+                .and_then(|pid| pid.parent())
+                .and_then(|gpid| self.find_or_create_candidate(gpid, candidates, nodes))
             {
-                c.score.set(c.score.get() + score)
+                c.score.set(c.score.get() + score / 2.0)
             }
         }
 
@@ -512,4 +495,79 @@ pub fn get_link_density(handle: Handle) -> f32 {
         link_length += dom::text_len(link.clone()) as f32;
     }
     link_length / text_length
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::{debug_candidates, CandidateTag};
+    use html5ever::{parse_document, tendril::TendrilSink};
+    use std::{fs::File, io::Read};
+
+    #[test]
+    fn test_find_candidates_basic() {
+        let html = r#"
+        <!DOCTYPE html>
+        <html>
+            <head><title>Test Title</title></head>
+            <body>
+                <h1>Welcome</h1>
+                <p>This is a test paragraph.</p>
+            </body>
+        </html>"#;
+        let options = ScorerOptions::default();
+        let scorer = Scorer::new(options);
+        let dom = parse_document(RcDom::default(), Default::default())
+            .from_utf8()
+            .read_from(&mut html.as_bytes())
+            .unwrap();
+
+        assert!(dom.errors.is_empty(), "{:?}", dom.errors);
+
+        let mut candidates = BTreeMap::new();
+        let mut nodes = BTreeMap::new();
+
+        scorer.find_candidates(Path::new("/"), dom.document, &mut candidates, &mut nodes);
+
+        assert_eq!(candidates.len(), 2);
+
+        let tags = dbg!(debug_candidates(&candidates));
+
+        assert!(candidates.contains_key("/1"));
+        assert!(tags.contains(&CandidateTag::new("html", None, 0.5)));
+
+        assert!(candidates.contains_key("/1/2"));
+        assert!(tags.contains(&CandidateTag::new("body", None, 1.0)));
+    }
+
+    #[test]
+    fn test_find_candidates_comments() {
+        let mut file = File::open("data/comments/input.html").unwrap();
+        let mut html = String::new();
+        file.read_to_string(&mut html).unwrap();
+
+        let options = ScorerOptions::default();
+        let scorer = Scorer::new(options);
+        let dom = parse_document(RcDom::default(), Default::default())
+            .from_utf8()
+            .read_from(&mut html.as_bytes())
+            .unwrap();
+
+        assert!(dom.errors.is_empty(), "{:?}", dom.errors);
+
+        let mut candidates = BTreeMap::new();
+        let mut nodes = BTreeMap::new();
+
+        scorer.find_candidates(Path::new("/"), dom.document, &mut candidates, &mut nodes);
+        assert_eq!(candidates.len(), 6);
+
+        let tags = dbg!(debug_candidates(&candidates));
+
+        assert!(tags.contains(&CandidateTag::new("div", Some("comment_1"), -44.5)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("comment_2"), -44.5)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("comment_3"), -44.5)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_1"), 6.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_2"), 6.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_3"), 6.0)));
+    }
 }
