@@ -1,7 +1,7 @@
 use crate::{
     dom,
     error::ReadabilityError,
-    scorer::{self, Scorer, ScorerOptions},
+    scorer::{self, Scorer, ScorerOptions, TopCandidate},
 };
 use html5ever::{parse_document, serialize, tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
@@ -28,7 +28,7 @@ pub struct ParseOptions {
     pub strict: bool,
 }
 
-/// Extract content and text with a custom [`Scorer`].
+/// Extract content from an HTML reader.
 pub fn extract<R>(
     input: &mut R,
     url: &Url,
@@ -62,38 +62,38 @@ where
             .collect::<Vec<_>>()
     );
 
-    let mut id: &str = "/";
-    let mut top_candidate: &Candidate = &Candidate {
-        node: handle.clone(),
-        score: Cell::new(0.0),
-    };
-    for (i, c) in candidates.iter() {
-        let score = c.score.get() * (1.0 - scorer::get_link_density(c.node.clone()));
-        c.score.set(score);
-        if score <= top_candidate.score.get() {
-            continue;
-        }
-        id = i;
-        top_candidate = c;
-    }
+    let top_candidate = scorer.find_top_candidate(&candidates).unwrap_or_else(|| {
+        TopCandidate::new(
+            "/",
+            Candidate {
+                node: handle.clone(),
+                score: Cell::new(0.0),
+            },
+        )
+    });
+    let top_node = top_candidate.node();
+
+    debug!("Found top candidate: {top_node:?}");
+
+    scorer.clean(
+        &mut dom,
+        Path::new(top_candidate.id()),
+        top_candidate.node().clone(),
+        url,
+        &candidates,
+    );
+
     let mut bytes = vec![];
-
-    let node = top_candidate.node.clone();
-
-    debug!("Found top candidate: {node:?}");
-
-    scorer.clean(&mut dom, Path::new(id), node.clone(), url, &candidates);
 
     serialize(
         &mut bytes,
-        &SerializableHandle::from(node.clone()),
+        &SerializableHandle::from(top_node.clone()),
         Default::default(),
-    )
-    .ok();
+    )?;
     let content = String::from_utf8(bytes).unwrap_or_default();
 
     let mut text: String = String::new();
-    dom::extract_text(node.clone(), &mut text, true);
+    dom::extract_text(top_node.clone(), &mut text, true);
 
     debug!("Extracted title: {title}");
     debug!("Extracted content: {content}");

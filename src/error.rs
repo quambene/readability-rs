@@ -8,8 +8,8 @@ pub enum ReadabilityError {
     ParseUrl(#[from] url::ParseError),
     #[error("Can't parse HTML: {0:?}")]
     ParseHtml(Vec<Cow<'static, str>>),
-    #[error("Can't read HTML: {0:?}")]
-    ReadHtml(#[from] io::Error),
+    #[error("Can't read/write HTML: {0:?}")]
+    ReadWriteHtml(#[from] io::Error),
     #[error("Can't fetch url")]
     FetchUrl,
     #[error("Unexpected error")]

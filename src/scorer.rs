@@ -11,7 +11,7 @@ use markup5ever_rcdom::{
     RcDom,
 };
 use regex::Regex;
-use std::{cell::Cell, collections::BTreeMap, path::Path, rc::Rc};
+use std::{borrow::Cow, cell::Cell, collections::BTreeMap, path::Path, rc::Rc};
 use url::Url;
 
 const PUNCTUATIONS_REGEX: &str = r"([、。，．！？]|\.[^A-Za-z0-9]|,[^0-9]|!|\?)";
@@ -48,9 +48,36 @@ lazy_static! {
     static ref NEGATIVE: Regex = Regex::new(NEGATIVE_CANDIDATES).unwrap();
 }
 
+#[derive(Clone)]
 pub struct Candidate {
     pub node: Rc<Node>,
     pub score: Cell<f32>,
+}
+
+pub struct TopCandidate<'a> {
+    id: Cow<'a, str>,
+    candidate: Cow<'a, Candidate>,
+}
+
+impl<'a> TopCandidate<'a> {
+    pub fn new(id: &'a str, candidate: Candidate) -> Self {
+        Self {
+            id: Cow::Borrowed(id),
+            candidate: Cow::Owned(candidate),
+        }
+    }
+
+    pub fn id(&self) -> &str {
+        self.id.as_ref()
+    }
+
+    pub fn node(&self) -> &Rc<Node> {
+        &self.candidate.node
+    }
+
+    pub fn score(&self) -> &Cell<f32> {
+        &self.candidate.score
+    }
 }
 
 #[derive(Debug)]
@@ -77,7 +104,7 @@ impl Default for ScorerOptions<'_> {
 }
 
 pub struct Scorer<'a> {
-    pub options: ScorerOptions<'a>,
+    options: ScorerOptions<'a>,
 }
 
 impl<'a> Scorer<'a> {
@@ -216,6 +243,30 @@ impl<'a> Scorer<'a> {
                 nodes,
             )
         }
+    }
+
+    pub fn find_top_candidate(
+        &self,
+        candidates: &'a BTreeMap<String, Candidate>,
+    ) -> Option<TopCandidate<'a>> {
+        let mut top_candidate: Option<TopCandidate> = None;
+
+        for (id, candidate) in candidates.iter() {
+            let score = candidate.score.get() * (1.0 - get_link_density(candidate.node.clone()));
+            candidate.score.set(score);
+
+            if top_candidate
+                .as_ref()
+                .map_or(true, |top| score > top.candidate.score.get())
+            {
+                top_candidate = Some(TopCandidate {
+                    id: Cow::Borrowed(id),
+                    candidate: Cow::Borrowed(candidate),
+                });
+            }
+        }
+
+        top_candidate
     }
 
     pub fn clean(
