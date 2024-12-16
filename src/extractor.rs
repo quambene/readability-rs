@@ -12,7 +12,7 @@ use std::{cell::Cell, collections::BTreeMap, default::Default, io::Read, path::P
 use url::Url;
 
 #[derive(Debug)]
-pub struct Product {
+pub struct Readable {
     pub title: String,
     pub content: String,
     pub text: String,
@@ -40,7 +40,7 @@ pub fn extract<R>(
     input: &mut R,
     url: &Url,
     opts: ExtractOptions,
-) -> Result<Product, ReadabilityError>
+) -> Result<Readable, ReadabilityError>
 where
     R: Read,
 {
@@ -72,7 +72,7 @@ where
     debug!("Extracted text: {text}");
     debug!("Extracted content: {content_string}");
 
-    Ok(Product {
+    Ok(Readable {
         title: content.title,
         content: content_string,
         text,
