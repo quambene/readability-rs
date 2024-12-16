@@ -1,5 +1,5 @@
 use crate::scorer::Candidate;
-use markup5ever_rcdom::NodeData;
+use markup5ever_rcdom::{Handle, NodeData};
 use std::collections::BTreeMap;
 
 pub fn debug_candidates(
@@ -26,6 +26,26 @@ pub fn debug_candidate(candidate: &Candidate) -> Option<(&str, Vec<(String, Stri
                 })
                 .collect::<Vec<_>>(),
             candidate.score.get(),
+        ))
+    } else {
+        None
+    }
+}
+
+pub fn debug_node(node: &Handle) -> Option<(&str, Vec<(String, String)>)> {
+    if let NodeData::Element { name, attrs, .. } = &node.data {
+        Some((
+            name.local.as_ref(),
+            attrs
+                .borrow()
+                .iter()
+                .map(|attribute| {
+                    (
+                        attribute.name.local.to_string(),
+                        attribute.value.to_string(),
+                    )
+                })
+                .collect::<Vec<_>>(),
         ))
     } else {
         None
