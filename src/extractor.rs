@@ -5,7 +5,7 @@ use crate::{
 };
 use html5ever::{parse_document, serialize, tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
-use markup5ever_rcdom::{RcDom, SerializableHandle};
+use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use scorer::Candidate;
 use std::{cell::Cell, collections::BTreeMap, default::Default, io::Read, path::Path};
 use url::Url;
@@ -15,6 +15,12 @@ pub struct Product {
     pub title: String,
     pub content: String,
     pub text: String,
+}
+
+#[derive(Debug)]
+pub struct Content {
+    pub node: Handle,
+    pub title: String,
 }
 
 #[derive(Debug, Default)]
@@ -45,12 +51,41 @@ where
         return Err(ReadabilityError::ParseHtml(dom.errors));
     }
 
+    let content = extract_content(&mut dom, url, opts);
+
+    let mut bytes = vec![];
+
+    serialize(
+        &mut bytes,
+        &SerializableHandle::from(content.node.clone()),
+        Default::default(),
+    )?;
+
+    let mut text: String = String::new();
+
+    dom::extract_text(content.node.clone(), &mut text, true);
+
+    let content_string = String::from_utf8(bytes).unwrap_or_default();
+
+    debug!("Extracted title: {}", content.title);
+    debug!("Extracted text: {text}");
+    debug!("Extracted content: {content_string}");
+
+    Ok(Product {
+        title: content.title,
+        content: content_string,
+        text,
+    })
+}
+
+/// Extract content `Node` from DOM.
+pub fn extract_content(dom: &mut RcDom, url: &Url, opts: ExtractOptions) -> Content {
     let mut title = String::new();
     let mut candidates = BTreeMap::new();
     let mut nodes = BTreeMap::new();
     let handle = dom.document.clone();
     let scorer = Scorer::new(opts.scorer_options);
-    scorer.preprocess(&mut dom, handle.clone(), &mut title);
+    scorer.preprocess(dom, handle.clone(), &mut title);
     scorer.find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
 
     debug!("Found candidates: {}", candidates.values().len());
@@ -71,37 +106,20 @@ where
             },
         )
     });
-    let top_node = top_candidate.node();
+    let node = top_candidate.node();
 
-    debug!("Found top candidate: {top_node:?}");
+    debug!("Found top candidate: {node:?}");
 
     scorer.clean(
-        &mut dom,
+        dom,
         Path::new(top_candidate.id()),
-        top_candidate.node().clone(),
+        node.clone(),
         url,
         &candidates,
     );
 
-    let mut bytes = vec![];
-
-    serialize(
-        &mut bytes,
-        &SerializableHandle::from(top_node.clone()),
-        Default::default(),
-    )?;
-    let content = String::from_utf8(bytes).unwrap_or_default();
-
-    let mut text: String = String::new();
-    dom::extract_text(top_node.clone(), &mut text, true);
-
-    debug!("Extracted title: {title}");
-    debug!("Extracted content: {content}");
-    debug!("Extracted text: {text}");
-
-    Ok(Product {
+    Content {
+        node: node.clone(),
         title,
-        content,
-        text,
-    })
+    }
 }
