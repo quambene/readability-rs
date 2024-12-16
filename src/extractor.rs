@@ -2,6 +2,7 @@ use crate::{
     dom,
     error::ReadabilityError,
     scorer::{self, Scorer, ScorerOptions, TopCandidate},
+    utils::{debug_candidate, debug_candidates},
 };
 use html5ever::{parse_document, serialize, tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
@@ -90,13 +91,7 @@ pub fn extract_content(dom: &mut RcDom, url: &Url, opts: ExtractOptions) -> Cont
     scorer.find_candidates(Path::new("/"), handle.clone(), &mut candidates, &mut nodes);
 
     debug!("Found candidates: {}", candidates.values().len());
-    trace!(
-        "Found candidates: {:?}",
-        candidates
-            .values()
-            .map(|candidate| candidate.node.clone())
-            .collect::<Vec<_>>()
-    );
+    trace!("Found candidates: {:?}", debug_candidates(&candidates));
 
     let top_candidate = scorer.find_top_candidate(&candidates).unwrap_or_else(|| {
         TopCandidate::new(
@@ -108,7 +103,10 @@ pub fn extract_content(dom: &mut RcDom, url: &Url, opts: ExtractOptions) -> Cont
         )
     });
 
-    debug!("Found top candidate: {:?}", top_candidate.node().data);
+    debug!(
+        "Found top candidate: {:?}",
+        debug_candidate(top_candidate.candidate())
+    );
 
     scorer.clean(
         dom,

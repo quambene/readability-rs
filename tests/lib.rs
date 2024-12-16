@@ -17,7 +17,7 @@ fn init_logger() {
     LOGGER.call_once(|| {
         env_logger::builder()
             .filter_level(LevelFilter::Info)
-            .filter_module("readability", LevelFilter::Debug)
+            .filter_module("readability", LevelFilter::Trace)
             .is_test(true)
             .try_init()
             .unwrap();

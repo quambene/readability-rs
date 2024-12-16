@@ -71,6 +71,10 @@ impl<'a> TopCandidate<'a> {
         self.id.as_ref()
     }
 
+    pub fn candidate(&self) -> &Candidate {
+        &self.candidate
+    }
+
     pub fn node(&self) -> &Rc<Node> {
         &self.candidate.node
     }
