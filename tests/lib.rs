@@ -13,7 +13,7 @@ use url::Url;
 static LOGGER: Once = Once::new();
 
 /// Use `cargo test -- --nocapture` to display logged warnings and debug messages.
-pub fn init_logger() {
+fn init_logger() {
     LOGGER.call_once(|| {
         env_logger::builder()
             .filter_level(LevelFilter::Info)
@@ -22,6 +22,35 @@ pub fn init_logger() {
             .try_init()
             .unwrap();
     });
+}
+
+fn test_extract_with_options(
+    options: ExtractOptions<'_>,
+    url: &str,
+    input_path: &Path,
+    content_path: &Path,
+    text_path: &Path,
+    title_path: &Path,
+) {
+    let mut file = File::open(input_path).unwrap();
+    let url = Url::parse(url).unwrap();
+    let product = extract(&mut file, &url, options).unwrap();
+
+    let mut file = File::open(content_path).unwrap();
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+    let content = content.replace(['\n', '\r'], "");
+    assert_eq!(product.content, content);
+
+    let mut file = File::open(text_path).unwrap();
+    let mut text = String::new();
+    file.read_to_string(&mut text).unwrap();
+    assert_eq!(product.text, text);
+
+    let mut file = File::open(title_path).unwrap();
+    let mut title = String::new();
+    file.read_to_string(&mut title).unwrap();
+    assert_eq!(product.title, title);
 }
 
 #[rstest]
@@ -35,29 +64,20 @@ fn test_extract(#[case] test_name: &str, #[case] url: &str) {
     let expected_content_path = data_path.join("expected.html");
     let expected_text_path = data_path.join("expected.txt");
     let expected_title_path = data_path.join("expected_title.txt");
+    let options = ExtractOptions::default();
 
-    let mut file = File::open(input_path).unwrap();
-    let url = Url::parse(url).unwrap();
-    let product = extract(&mut file, &url, Default::default()).unwrap();
-
-    let mut file = File::open(expected_content_path).unwrap();
-    let mut expected_content = String::new();
-    file.read_to_string(&mut expected_content).unwrap();
-    let expected_content = expected_content.replace(['\n', '\r'], "");
-    assert_eq!(product.content, expected_content);
-
-    let mut file = File::open(expected_text_path).unwrap();
-    let mut expected_text = String::new();
-    file.read_to_string(&mut expected_text).unwrap();
-    assert_eq!(product.text, expected_text);
-
-    let mut file = File::open(expected_title_path).unwrap();
-    let mut expected_title = String::new();
-    file.read_to_string(&mut expected_title).unwrap();
-    assert_eq!(product.title, expected_title);
+    test_extract_with_options(
+        options,
+        url,
+        &input_path,
+        &expected_content_path,
+        &expected_text_path,
+        &expected_title_path,
+    );
 }
 
 #[rstest]
+#[case::hn("hn", "https://example.com")]
 #[case::comments("comments", "https://example.com")]
 fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
     use readability::{ExtractOptions, ScorerOptions};
@@ -69,9 +89,6 @@ fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
     let expected_content_path = data_path.join("expected_with_scorer.html");
     let expected_text_path = data_path.join("expected_with_scorer.txt");
     let expected_title_path = data_path.join("expected_title.txt");
-
-    let mut file = File::open(input_path).unwrap();
-    let url = Url::parse(url).unwrap();
     let options = ExtractOptions { parse_options: Default::default(), scorer_options: ScorerOptions {
         unlikely_candidates: &Regex::new(
             "combx|community|disqus|extra|foot|header|menu|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|ssba",
@@ -79,23 +96,15 @@ fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
         .unwrap(),
         ..Default::default()
     }};
-    let product = extract(&mut file, &url, options).unwrap();
 
-    let mut file = File::open(expected_content_path).unwrap();
-    let mut expected_content = String::new();
-    file.read_to_string(&mut expected_content).unwrap();
-    let expected_content = expected_content.replace(['\n', '\r'], "");
-    assert_eq!(product.content, expected_content);
-
-    let mut file = File::open(expected_text_path).unwrap();
-    let mut expected_text = String::new();
-    file.read_to_string(&mut expected_text).unwrap();
-    assert_eq!(product.text, expected_text);
-
-    let mut file = File::open(expected_title_path).unwrap();
-    let mut expected_title = String::new();
-    file.read_to_string(&mut expected_title).unwrap();
-    assert_eq!(product.title, expected_title);
+    test_extract_with_options(
+        options,
+        url,
+        &input_path,
+        &expected_content_path,
+        &expected_text_path,
+        &expected_title_path,
+    );
 }
 
 #[test]
