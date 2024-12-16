@@ -94,6 +94,7 @@ fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
             "combx|community|disqus|extra|foot|header|menu|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|ssba",
         )
         .unwrap(),
+        negative_candidates: &Regex::new("combx|contact|foot|footer|footnote|masthead|media|meta|outbrain|promo|related|scroll|shoutbox|sidebar|sponsor|shopping|tags|tool|widget|form|textfield|uiScale|hidden").unwrap(),
         ..Default::default()
     }};
 
