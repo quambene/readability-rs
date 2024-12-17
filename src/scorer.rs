@@ -241,7 +241,7 @@ impl<'a> Scorer<'a> {
                     current_id.to_str().map(|id| id.to_string()).and_then(|id| {
                         // Only parent nodes are valid candidates.
                         if current_id != node_id {
-                            self.find_or_create_candidate(&Path::new(&id), candidates, nodes)
+                            self.find_or_create_candidate(Path::new(&id), candidates, nodes)
                         } else {
                             None
                         }
