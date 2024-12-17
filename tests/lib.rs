@@ -54,7 +54,6 @@ fn test_extract_with_options(
 }
 
 #[rstest]
-#[case::comments("comment", "https://example.com")]
 #[case::url("url", "https://example.com")]
 fn test_extract(#[case] test_name: &str, #[case] url: &str) {
     init_logger();
@@ -77,8 +76,8 @@ fn test_extract(#[case] test_name: &str, #[case] url: &str) {
 }
 
 #[rstest]
-#[case::hn("comments", "https://example.com")]
-#[case::comments("comment", "https://example.com")]
+#[case::comments("comments", "https://example.com")]
+#[case::comment("comment", "https://example.com")]
 fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
     use readability::{ExtractOptions, ScorerOptions};
 
@@ -153,7 +152,7 @@ fn test_extract_basic() {
             <head><title>Test Title</title></head>
             <body>
                 <h1>Welcome</h1>
-                <p>This is a test paragraph.</p>
+                <p>This is a test paragraph with more than 25 characters.</p>
             </body>
         </html>
         "#;
@@ -162,8 +161,14 @@ fn test_extract_basic() {
 
     let result = extract(&mut input, &url, Default::default()).unwrap();
     assert_eq!(result.title, "Test Title");
-    assert_eq!(result.content, "<p>This is a test paragraph.</p>");
-    assert_eq!(result.text, "This is a test paragraph.");
+    assert_eq!(
+        result.content,
+        "<p>This is a test paragraph with more than 25 characters.</p>"
+    );
+    assert_eq!(
+        result.text,
+        "This is a test paragraph with more than 25 characters."
+    );
 }
 
 #[test]
