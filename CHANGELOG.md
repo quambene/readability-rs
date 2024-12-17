@@ -13,6 +13,7 @@
   - Make `min_candidate_length`, `positive_candidate_weight`,
     `positive_candidate_weight`, `max_candidate_parents`, and `candidate_score`
     configurable for `ScorerOptions`
+  - Ignore candidates above the `body` tag in DOM
 - removed
   - Remove `scrape()`
 

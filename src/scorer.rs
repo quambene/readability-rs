@@ -212,12 +212,12 @@ impl<'a> Scorer<'a> {
     /// Find candidate tags in DOM node, and distribute score among them.
     pub fn find_candidates(
         &self,
-        candidate_id: &Path,
+        node_id: &Path,
         handle: Handle,
         candidates: &mut BTreeMap<String, Candidate>,
         nodes: &mut BTreeMap<String, Rc<Node>>,
     ) {
-        if let Some(id) = candidate_id
+        if let Some(id) = node_id
             .to_str()
             .map(|candidate_id| candidate_id.to_string())
         {
@@ -227,11 +227,11 @@ impl<'a> Scorer<'a> {
         if self.is_candidate(handle.clone()) {
             let content_score = self.calculate_content_score(handle.clone());
 
-            let mut current = Some(candidate_id.to_path_buf());
+            let mut current_node_id = Some(node_id.to_path_buf());
             let mut level = 1;
 
             // Traverse all parent nodes and distribute content score.
-            while let Some(current_id) = current {
+            while let Some(current_id) = current_node_id {
                 // Break traversal for performance reasons.
                 if level > self.options.max_candidate_parents {
                     break;
@@ -240,7 +240,7 @@ impl<'a> Scorer<'a> {
                 if let Some(candidate) =
                     current_id.to_str().map(|id| id.to_string()).and_then(|id| {
                         // Only parent nodes are valid candidates.
-                        if current_id != candidate_id {
+                        if current_id != node_id {
                             self.find_or_create_candidate(&Path::new(&id), candidates, nodes)
                         } else {
                             None
@@ -254,15 +254,21 @@ impl<'a> Scorer<'a> {
                     candidate
                         .score
                         .set(candidate.score.get() + adjusted_content_score);
+
+                    // Ignore candidates above the `body` node.
+                    if dom::get_tag_name(candidate.node.clone()).as_deref() == Some("body") {
+                        break;
+                    }
                 }
-                current = current_id.parent().map(|pid| pid.to_path_buf());
+
+                current_node_id = current_id.parent().map(|pid| pid.to_path_buf());
                 level += 1;
             }
         }
 
         for (i, child) in handle.children.borrow().iter().enumerate() {
             self.find_candidates(
-                candidate_id.join(i.to_string()).as_path(),
+                node_id.join(i.to_string()).as_path(),
                 child.clone(),
                 candidates,
                 nodes,
@@ -548,7 +554,7 @@ mod tests {
             <head><title>Test Title</title></head>
             <body>
                 <h1>Welcome</h1>
-                <p>This is a test paragraph.</p>
+                <p>This is a test paragraph with more than 25 characters.</p>
             </body>
         </html>"#;
         let options = ScorerOptions::default();
@@ -567,12 +573,7 @@ mod tests {
 
         let tags = dbg!(debug_candidates(&candidates));
 
-        assert_eq!(candidates.len(), 3);
-
-        assert!(candidates.contains_key("/1"));
-        assert!(tags.contains(&CandidateTag::new("html", None, 1.0)));
-
-        assert!(candidates.contains_key("/1/2"));
+        assert_eq!(candidates.len(), 1);
         assert!(tags.contains(&CandidateTag::new("body", None, 1.0)));
     }
 
