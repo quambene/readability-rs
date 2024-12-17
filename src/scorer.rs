@@ -90,6 +90,8 @@ impl<'a> TopCandidate<'a> {
 pub struct ScorerOptions<'a> {
     /// The minimum word length of candidates.
     pub min_candidate_length: usize,
+    /// The maximal number of parent nodes that will be traversed.
+    pub max_candidate_parents: usize,
     pub punctuations: &'a Regex,
     pub unlikely_candidates: &'a Regex,
     pub likely_candidates: &'a Regex,
@@ -104,6 +106,7 @@ impl Default for ScorerOptions<'_> {
     fn default() -> Self {
         Self {
             min_candidate_length: 20,
+            max_candidate_parents: 10,
             punctuations: &PUNCTUATIONS,
             likely_candidates: &LIKELY,
             unlikely_candidates: &UNLIKELY,
@@ -215,6 +218,10 @@ impl<'a> Scorer<'a> {
 
             // Traverse all parent nodes and distribute content score.
             while let Some(current_id) = current {
+                if level > self.options.max_candidate_parents {
+                    break;
+                }
+
                 if let Some(candidate) =
                     current_id.to_str().map(|id| id.to_string()).and_then(|id| {
                         // Only parent nodes are valid candidates.
