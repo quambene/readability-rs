@@ -570,10 +570,10 @@ mod tests {
         assert_eq!(candidates.len(), 3);
 
         assert!(candidates.contains_key("/1"));
-        assert!(tags.contains(&CandidateTag::new("html", None, 0.33333334)));
+        assert!(tags.contains(&CandidateTag::new("html", None, 1.0)));
 
         assert!(candidates.contains_key("/1/2"));
-        assert!(tags.contains(&CandidateTag::new("body", None, 0.5)));
+        assert!(tags.contains(&CandidateTag::new("body", None, 1.0)));
     }
 
     #[test]
@@ -606,13 +606,20 @@ mod tests {
 
         let tags = dbg!(debug_candidates(&candidates));
 
-        assert_eq!(candidates.len(), 20);
+        assert_eq!(candidates.len(), 15);
 
-        assert!(tags.contains(&CandidateTag::new("div", Some("comment_1"), -44.5)));
-        assert!(tags.contains(&CandidateTag::new("div", Some("comment_2"), -44.5)));
-        assert!(tags.contains(&CandidateTag::new("div", Some("comment_3"), -44.5)));
-        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_1"), 6.0)));
-        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_2"), 6.0)));
-        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_3"), 6.0)));
+        assert!(tags.contains(&CandidateTag::new("tbody", None, 9.0)));
+        assert!(tags.contains(&CandidateTag::new("tr", Some("tr_2"), 9.0)));
+        assert!(tags.contains(&CandidateTag::new("table", Some("table_2"), 9.0)));
+        assert!(tags.contains(&CandidateTag::new("td", Some("td_0"), 12.0)));
+        assert!(tags.contains(&CandidateTag::new("td", Some("td_1"), 6.0)));
+        assert!(tags.contains(&CandidateTag::new("td", Some("td_2"), 6.0)));
+        assert!(tags.contains(&CandidateTag::new("td", Some("td_3"), 6.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("comment_1"), 8.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("comment_2"), 8.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("comment_3"), 8.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_1"), 8.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_2"), 8.0)));
+        assert!(tags.contains(&CandidateTag::new("div", Some("commtext_3"), 8.0)));
     }
 }
