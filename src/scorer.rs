@@ -94,7 +94,9 @@ pub struct ScorerOptions<'a> {
     pub unlikely_candidates: &'a Regex,
     pub likely_candidates: &'a Regex,
     pub positive_candidates: &'a Regex,
+    pub positive_candidate_weight: f32,
     pub negative_candidates: &'a Regex,
+    pub negative_candidate_weight: f32,
     pub block_child_tags: &'a [&'a str],
 }
 
@@ -106,7 +108,9 @@ impl Default for ScorerOptions<'_> {
             likely_candidates: &LIKELY,
             unlikely_candidates: &UNLIKELY,
             positive_candidates: &POSITIVE,
+            positive_candidate_weight: 25.0,
             negative_candidates: &NEGATIVE,
+            negative_candidate_weight: 25.0,
             block_child_tags: &BLOCK_CHILD_TAGS,
         }
     }
@@ -339,10 +343,10 @@ impl<'a> Scorer<'a> {
             for name in ["id", "class"].iter() {
                 if let Some(val) = dom::attr(name, &attrs.borrow()) {
                     if self.options.positive_candidates.is_match(&val) {
-                        weight += 25.0
+                        weight += self.options.positive_candidate_weight
                     };
                     if self.options.negative_candidates.is_match(&val) {
-                        weight -= 25.0
+                        weight -= self.options.negative_candidate_weight
                     }
                 }
             }

@@ -9,8 +9,10 @@
 - changed
   - Restrict public interface
   - Make strict parsing configurable in `ParseOptions`
-  - Make `ScorerOptions::min_candidate_length` configurable
+  - Make `min_candidate_length` configurable for `ScorerOptions`
   - Distribute content score among all candidate parents
+  - Make `positive_candidate_weight` and `positive_candidate_weight`
+    configurable for `ScorerOptions`
 - removed
   - Remove `scrape()`
 
