@@ -10,6 +10,7 @@
   - Restrict public interface
   - Make strict parsing configurable in `ParseOptions`
   - Make `ScorerOptions::min_candidate_length` configurable
+  - Distribute content score among all candidate parents
 - removed
   - Remove `scrape()`
 

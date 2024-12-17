@@ -204,16 +204,16 @@ impl<'a> Scorer<'a> {
         }
 
         if self.is_candidate(handle.clone()) {
-            let score = self.calculate_content_score(handle.clone());
+            let content_score = self.calculate_content_score(handle.clone());
 
             let mut current = Some(candidate_id.to_path_buf());
             let mut level = 1;
 
-            // Traverse all parent nodes and distribute scores
+            // Traverse all parent nodes and distribute content score.
             while let Some(current_id) = current {
                 if let Some(candidate) =
                     current_id.to_str().map(|id| id.to_string()).and_then(|id| {
-                        // Only parent nodes are valid candidates
+                        // Only parent nodes are valid candidates.
                         if current_id != candidate_id {
                             self.find_or_create_candidate(&Path::new(&id), candidates, nodes)
                         } else {
@@ -221,11 +221,9 @@ impl<'a> Scorer<'a> {
                         }
                     })
                 {
-                    candidate
-                        .score
-                        .set(candidate.score.get() + score / level as f32);
+                    candidate.score.set(candidate.score.get() + content_score);
                 }
-                current = current_id.parent().map(|p| p.to_path_buf());
+                current = current_id.parent().map(|pid| pid.to_path_buf());
                 level += 1;
             }
         }
@@ -240,6 +238,7 @@ impl<'a> Scorer<'a> {
         }
     }
 
+    // TODO: find top candidates with similar score.
     pub fn find_top_candidate(
         &self,
         candidates: &'a BTreeMap<String, Candidate>,
@@ -557,6 +556,7 @@ mod tests {
             )
             .unwrap(),
             negative_candidates: &Regex::new("combx|contact|foot|footer|footnote|masthead|media|meta|outbrain|promo|related|scroll|shoutbox|sidebar|sponsor|shopping|tags|tool|widget|form|textfield|uiScale|hidden").unwrap(),
+            positive_candidates: &Regex::new("article|body|content|entry|hentry|main|page|pagination|post|blog|story").unwrap(),
             ..Default::default()
         };
         let scorer = Scorer::new(options);
