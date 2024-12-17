@@ -86,12 +86,25 @@ impl<'a> TopCandidate<'a> {
     }
 }
 
+/// Distribution of the content score among parent nodes.
+#[derive(Debug)]
+pub enum CandidateScore {
+    /// The same weight for all parent nodes.
+    EqualWeight,
+    /// The weight decreases with the level of the parent node.
+    ///
+    /// For example, a parent node will be weighted more than a grandparent.
+    LevelWeight,
+}
+
 #[derive(Debug)]
 pub struct ScorerOptions<'a> {
     /// The minimum word length of candidates.
     pub min_candidate_length: usize,
     /// The maximal number of parent nodes that will be traversed.
     pub max_candidate_parents: usize,
+    /// Distribution of the content score among parent nodes.
+    pub candidate_score: CandidateScore,
     pub punctuations: &'a Regex,
     pub unlikely_candidates: &'a Regex,
     pub likely_candidates: &'a Regex,
@@ -107,6 +120,7 @@ impl Default for ScorerOptions<'_> {
         Self {
             min_candidate_length: 20,
             max_candidate_parents: 10,
+            candidate_score: CandidateScore::EqualWeight,
             punctuations: &PUNCTUATIONS,
             likely_candidates: &LIKELY,
             unlikely_candidates: &UNLIKELY,
@@ -233,7 +247,13 @@ impl<'a> Scorer<'a> {
                         }
                     })
                 {
-                    candidate.score.set(candidate.score.get() + content_score);
+                    let adjusted_content_score = match self.options.candidate_score {
+                        CandidateScore::EqualWeight => content_score,
+                        CandidateScore::LevelWeight => content_score / (level as f32),
+                    };
+                    candidate
+                        .score
+                        .set(candidate.score.get() + adjusted_content_score);
                 }
                 current = current_id.parent().map(|pid| pid.to_path_buf());
                 level += 1;

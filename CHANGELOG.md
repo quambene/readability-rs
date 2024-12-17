@@ -11,8 +11,8 @@
   - Make strict parsing configurable in `ParseOptions`
   - Distribute content score among all candidate parents
   - Make `min_candidate_length`, `positive_candidate_weight`,
-    `positive_candidate_weight`, and `max_candidate_parents` configurable for
-    `ScorerOptions`
+    `positive_candidate_weight`, `max_candidate_parents`, and `candidate_score`
+    configurable for `ScorerOptions`
 - removed
   - Remove `scrape()`
 
