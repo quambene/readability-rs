@@ -1,13 +1,11 @@
 use log::LevelFilter;
-use readability::{
-    extractor::{extract, extract_with_scorer},
-    scorer::Scorer,
-};
+use readability::{extract, ExtractOptions, ParseOptions};
 use regex::Regex;
 use rstest::rstest;
 use std::{
     fs::File,
     io::{Cursor, Read},
+    path::Path,
     sync::Once,
 };
 use url::Url;
@@ -15,108 +13,98 @@ use url::Url;
 static LOGGER: Once = Once::new();
 
 /// Use `cargo test -- --nocapture` to display logged warnings and debug messages.
-pub fn init_logger() {
+fn init_logger() {
     LOGGER.call_once(|| {
         env_logger::builder()
             .filter_level(LevelFilter::Info)
-            .filter_module("readability", LevelFilter::Debug)
+            .filter_module("readability", LevelFilter::Trace)
             .is_test(true)
             .try_init()
             .unwrap();
     });
 }
 
-#[rstest]
-#[case(
-    "./data/url/input.html",
-    "./data/url/expected.html",
-    "./data/url/expected.txt",
-    "https://example.com"
-)]
-fn test_extract(
-    #[case] input: &str,
-    #[case] expected_content: &str,
-    #[case] expected_text: &str,
-    #[case] url: &str,
+fn test_extract_with_options(
+    options: ExtractOptions<'_>,
+    url: &str,
+    input_path: &Path,
+    content_path: &Path,
+    text_path: &Path,
+    title_path: &Path,
 ) {
+    let mut file = File::open(input_path).unwrap();
+    let url = Url::parse(url).unwrap();
+    let product = extract(&mut file, &url, options).unwrap();
+
+    let mut file = File::open(content_path).unwrap();
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+    let content = content.replace(['\n', '\r'], "");
+    assert_eq!(product.content, content);
+
+    let mut file = File::open(text_path).unwrap();
+    let mut text = String::new();
+    file.read_to_string(&mut text).unwrap();
+    assert_eq!(product.text, text);
+
+    let mut file = File::open(title_path).unwrap();
+    let mut title = String::new();
+    file.read_to_string(&mut title).unwrap();
+    assert_eq!(product.title, title);
+}
+
+#[rstest]
+#[case::url("url", "https://example.com")]
+fn test_extract(#[case] test_name: &str, #[case] url: &str) {
     init_logger();
 
-    let mut file = File::open(input).unwrap();
-    let url = Url::parse(url).unwrap();
-    let product = extract(&mut file, &url).unwrap();
+    let data_path = Path::new("./data").join(test_name);
+    let input_path = data_path.join("input.html");
+    let expected_content_path = data_path.join("expected.html");
+    let expected_text_path = data_path.join("expected.txt");
+    let expected_title_path = data_path.join("expected_title.txt");
+    let options = ExtractOptions::default();
 
-    let mut file = File::open(expected_content).unwrap();
-    let mut expected_content = String::new();
-    file.read_to_string(&mut expected_content).unwrap();
-    let expected_content = expected_content.replace(['\n', '\r'], "");
-    assert_eq!(product.content, expected_content);
-
-    let mut file = File::open(expected_text).unwrap();
-    let mut expected_text = String::new();
-    file.read_to_string(&mut expected_text).unwrap();
-    assert_eq!(product.text, expected_text);
-}
-
-#[test]
-fn test_extract_url() {
-    test_extract(
-        "./data/url/input.html",
-        "./data/url/expected.html",
-        "./data/url/expected.txt",
-        "https://example.com",
+    test_extract_with_options(
+        options,
+        url,
+        &input_path,
+        &expected_content_path,
+        &expected_text_path,
+        &expected_title_path,
     );
 }
 
-#[test]
-fn test_extract_title() {
-    let mut file = File::open("./data/title.html").unwrap();
-    let url = Url::parse("https://example.com").unwrap();
-    let product = extract(&mut file, &url).unwrap();
-    assert_eq!(product.title, "This is title");
-}
+#[rstest]
+#[case::comments("comments", "https://example.com")]
+#[case::comment("comment", "https://example.com")]
+fn test_extract_with_scorer(#[case] test_name: &str, #[case] url: &str) {
+    use readability::{ExtractOptions, ScorerOptions};
 
-#[test]
-fn test_fix_rel_links() {
-    let mut file = File::open("./data/rel.html").unwrap();
-    let url = Url::parse("https://example.com").unwrap();
-    let product = extract(&mut file, &url).unwrap();
-    assert_eq!(product.content, "<!DOCTYPE html><html><head><title>This is title</title></head><body><p><a href=\"https://example.com/poop\"> poop </a></p></body></html>");
-}
+    init_logger();
 
-#[test]
-fn test_fix_img_links() {
-    let mut file = File::open("./data/img.html").unwrap();
-    let url = Url::parse("https://example.com").unwrap();
-    let product = extract(&mut file, &url).unwrap();
-    assert_eq!(product.content, "<!DOCTYPE html><html><head><title>This is title</title></head><body><p><img src=\"https://example.com/poop.png\"></p></body></html>");
-}
-
-#[test]
-fn test_comment() {
-    let mut file = File::open("./data/comment.html").unwrap();
-    let url = Url::parse("https://example.com").unwrap();
-    let product = extract(&mut file, &url).unwrap();
-    assert_eq!(
-        product.content,
-        "<!DOCTYPE html><html><head><title>This is title</title></head><body></body></html>"
-    );
-}
-
-#[test]
-fn test_comment_custom() {
-    let mut file = File::open("./data/comment.html").unwrap();
-    let url = Url::parse("https://example.com").unwrap();
-    let scorer = Scorer {
+    let data_path = Path::new("./data").join(test_name);
+    let input_path = data_path.join("input.html");
+    let expected_content_path = data_path.join("expected_with_scorer.html");
+    let expected_text_path = data_path.join("expected_with_scorer.txt");
+    let expected_title_path = data_path.join("expected_title.txt");
+    let options = ExtractOptions { parse_options: Default::default(), scorer_options: ScorerOptions {
         unlikely_candidates: &Regex::new(
             "combx|community|disqus|extra|foot|header|menu|remark|rss|shoutbox|sidebar|sponsor|ad-break|agegate|pagination|pager|popup|tweet|twitter|ssba",
         )
         .unwrap(),
+        negative_candidates: &Regex::new("combx|contact|foot|footer|footnote|masthead|media|meta|outbrain|promo|related|scroll|shoutbox|sidebar|sponsor|shopping|tags|tool|widget|form|textfield|uiScale|hidden").unwrap(),
+        positive_candidates: &Regex::new("article|body|content|entry|hentry|main|page|pagination|post|blog|story").unwrap(),
         ..Default::default()
-    };
-    let product = extract_with_scorer(&mut file, &url, &scorer).unwrap();
-    assert_eq!(
-        product.content,
-        "My div with more than 25 characters.<p>My paragraph with more than 25 characters.</p>"
+    }};
+
+    test_extract_with_options(
+        options,
+        url,
+        &input_path,
+        &expected_content_path,
+        &expected_text_path,
+        &expected_title_path,
     );
 }
 
@@ -133,8 +121,12 @@ fn test_extract_malformed() {
         "#;
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
+    let options = ExtractOptions {
+        parse_options: ParseOptions { strict: true },
+        ..Default::default()
+    };
 
-    let result = extract(&mut input, &url);
+    let result = extract(&mut input, &url, options);
     assert!(result.is_err());
 }
 
@@ -143,8 +135,12 @@ fn test_extract_empty() {
     let html: &str = "";
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
+    let options = ExtractOptions {
+        parse_options: ParseOptions { strict: true },
+        ..Default::default()
+    };
 
-    let result = extract(&mut input, &url);
+    let result = extract(&mut input, &url, options);
     assert!(result.is_err());
 }
 
@@ -156,17 +152,23 @@ fn test_extract_basic() {
             <head><title>Test Title</title></head>
             <body>
                 <h1>Welcome</h1>
-                <p>This is a test paragraph.</p>
+                <p>This is a test paragraph with more than 25 characters.</p>
             </body>
         </html>
         "#;
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
 
-    let result = extract(&mut input, &url).unwrap();
+    let result = extract(&mut input, &url, Default::default()).unwrap();
     assert_eq!(result.title, "Test Title");
-    assert_eq!(result.content, "<p>This is a test paragraph.</p>");
-    assert_eq!(result.text, "This is a test paragraph.");
+    assert_eq!(
+        result.content,
+        "<p>This is a test paragraph with more than 25 characters.</p>"
+    );
+    assert_eq!(
+        result.text,
+        "This is a test paragraph with more than 25 characters."
+    );
 }
 
 #[test]
@@ -186,7 +188,7 @@ fn test_extract_large_html() {
     let url = Url::parse("https://example.com").unwrap();
     let mut input = Cursor::new(html);
 
-    let result = extract(&mut input, &url).unwrap();
+    let result = extract(&mut input, &url, Default::default()).unwrap();
     assert_eq!(result.title, "Large HTML Test");
     assert_eq!(result.text.matches("Repeated content.").count(), 1000);
 }

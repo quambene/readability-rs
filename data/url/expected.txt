@@ -1,3 +1,5 @@
 This is a paragraph with a url. The paragraph continues.
 This is a paragraph with a italic text. The paragraph continues.
 This is a paragraph with a italic url. The paragraph continues.
+This is a paragraph with a image: . The paragraph continues.
+This is a paragraph with a relative url. The paragraph continues.

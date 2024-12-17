@@ -88,6 +88,7 @@ pub fn is_empty(handle: Handle) -> bool {
     )
 }
 
+#[allow(dead_code)]
 pub fn has_link(handle: Handle) -> bool {
     if "a" == &get_tag_name(handle.clone()).unwrap_or_default() {
         return true;

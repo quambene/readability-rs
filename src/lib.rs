@@ -1,4 +1,9 @@
-pub mod dom;
-pub mod error;
-pub mod extractor;
-pub mod scorer;
+mod dom;
+mod error;
+mod extractor;
+mod scorer;
+mod utils;
+
+pub use error::ReadabilityError;
+pub use extractor::{extract, ExtractOptions, ParseOptions, Readable};
+pub use scorer::{Scorer, ScorerOptions};
