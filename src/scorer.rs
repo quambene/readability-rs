@@ -218,6 +218,7 @@ impl<'a> Scorer<'a> {
 
             // Traverse all parent nodes and distribute content score.
             while let Some(current_id) = current {
+                // Break traversal for performance reasons.
                 if level > self.options.max_candidate_parents {
                     break;
                 }
