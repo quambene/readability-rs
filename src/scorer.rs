@@ -87,7 +87,7 @@ impl<'a> TopCandidate<'a> {
 }
 
 /// Distribution of the content score among parent nodes.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CandidateScore {
     /// The same weight for all parent nodes.
     EqualWeight,
@@ -97,7 +97,7 @@ pub enum CandidateScore {
     LevelWeight,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ScorerOptions<'a> {
     /// The minimum word length of candidates.
     pub min_candidate_length: usize,
@@ -105,12 +105,19 @@ pub struct ScorerOptions<'a> {
     pub max_candidate_parents: usize,
     /// Distribution of the content score among parent nodes.
     pub candidate_score: CandidateScore,
+    /// The regex for punctuations.
     pub punctuations: &'a Regex,
+    /// The regex for unlikely candidates.
     pub unlikely_candidates: &'a Regex,
+    /// The regex for likely candidates.
     pub likely_candidates: &'a Regex,
+    /// The regex for positive candidates.
     pub positive_candidates: &'a Regex,
+    /// The weight of positive candidates to determine the content score.
     pub positive_candidate_weight: f32,
+    /// The regex for positive candidates.
     pub negative_candidates: &'a Regex,
+    /// The weight of negative candidates to determine the content score.
     pub negative_candidate_weight: f32,
     pub block_child_tags: &'a [&'a str],
 }

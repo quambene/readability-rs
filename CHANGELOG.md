@@ -1,5 +1,10 @@
 <!-- markdownlint-disable MD041 MD034 -->
 
+### v0.5.1 (unreleased)
+
+- changed
+  - Make options clonable
+
 ### v0.5.0
 
 - fixed

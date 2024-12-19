@@ -24,13 +24,13 @@ pub struct Content {
     pub title: String,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct ExtractOptions<'a> {
     pub parse_options: ParseOptions,
     pub scorer_options: ScorerOptions<'a>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct ParseOptions {
     pub strict: bool,
 }
