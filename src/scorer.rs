@@ -1,17 +1,17 @@
-use crate::dom;
+use crate::{
+    dom::{Handle, Node, NodeData, RcDom},
+    extractor::{self, extract_text},
+    html,
+};
 use html5ever::{
     namespace_url, ns,
     tree_builder::{ElementFlags, NodeOrText, TreeSink},
     LocalName, QualName,
 };
 use lazy_static::lazy_static;
-use markup5ever_rcdom::{
-    Handle, Node,
-    NodeData::{Comment, Doctype, Document, Element, ProcessingInstruction, Text},
-    RcDom,
-};
 use regex::Regex;
 use std::{borrow::Cow, cell::Cell, collections::BTreeMap, path::Path, rc::Rc};
+
 use url::Url;
 
 const PUNCTUATIONS_REGEX: &str = r"([、。，．！？]|\.[^A-Za-z0-9]|,[^0-9]|!|\?)";
@@ -150,7 +150,7 @@ impl<'a> Scorer<'a> {
     }
 
     pub fn preprocess(&self, dom: &mut RcDom, handle: Handle, title: &mut String) -> bool {
-        if let Element {
+        if let NodeData::Element {
             ref name,
             ref attrs,
             ..
@@ -159,11 +159,11 @@ impl<'a> Scorer<'a> {
             let tag_name = name.local.as_ref();
             match tag_name.to_lowercase().as_ref() {
                 "script" | "link" | "style" => return true,
-                "title" => dom::extract_text(handle.clone(), title, true),
+                "title" => extractor::extract_text(handle.clone(), title, true),
                 _ => (),
             }
             for name in ["id", "class"].iter() {
-                if let Some(val) = dom::attr(name, &attrs.borrow()) {
+                if let Some(val) = html::attr(name, &attrs.borrow()) {
                     if tag_name != "body"
                         && self.options.unlikely_candidates.is_match(&val)
                         && !self.options.likely_candidates.is_match(&val)
@@ -182,7 +182,7 @@ impl<'a> Scorer<'a> {
             }
             let c = child.clone();
             match c.data {
-                Element { ref name, .. } => {
+                NodeData::Element { ref name, .. } => {
                     let tag_name = name.local.as_ref();
                     if "br" == tag_name.to_lowercase() {
                         br_count += 1
@@ -190,7 +190,7 @@ impl<'a> Scorer<'a> {
                         br_count = 0
                     }
                 }
-                Text { ref contents } => {
+                NodeData::Text { ref contents } => {
                     let s = contents.borrow();
                     if br_count >= 2 && !s.trim().is_empty() {
                         paragraph_nodes.push(child.clone());
@@ -208,7 +208,7 @@ impl<'a> Scorer<'a> {
             let p = dom.create_element(name, vec![], ElementFlags::default());
             dom.append_before_sibling(node, NodeOrText::AppendNode(p.clone()));
             dom.remove_from_parent(node);
-            if let Text { ref contents } = node.clone().data {
+            if let NodeData::Text { ref contents } = node.clone().data {
                 let text = contents.clone().into_inner().clone();
                 dom.append(&p, NodeOrText::AppendText(text))
             }
@@ -263,7 +263,7 @@ impl<'a> Scorer<'a> {
                         .set(candidate.score.get() + adjusted_content_score);
 
                     // Ignore candidates above the `body` node.
-                    if dom::get_tag_name(candidate.node.clone()).as_deref() == Some("body") {
+                    if html::get_tag_name(candidate.node.clone()).as_deref() == Some("body") {
                         break;
                     }
                 }
@@ -318,16 +318,16 @@ impl<'a> Scorer<'a> {
     ) -> bool {
         let mut useless = false;
         match handle.data {
-            Document => (),
-            Doctype { .. } => (),
-            Text { ref contents } => {
+            NodeData::Document => (),
+            NodeData::Doctype { .. } => (),
+            NodeData::Text { ref contents } => {
                 let s = contents.borrow();
                 if s.trim().is_empty() {
                     useless = true
                 }
             }
-            Comment { .. } => useless = true,
-            Element {
+            NodeData::Comment { .. } => useless = true,
+            NodeData::Element {
                 ref name,
                 ref attrs,
                 ..
@@ -343,11 +343,11 @@ impl<'a> Scorer<'a> {
                     "a" => useless = !fix_anchor_path(handle.clone(), url),
                     _ => (),
                 }
-                dom::clean_attr("id", &mut attrs.borrow_mut());
-                dom::clean_attr("class", &mut attrs.borrow_mut());
-                dom::clean_attr("style", &mut attrs.borrow_mut());
+                html::clean_attr("id", &mut attrs.borrow_mut());
+                html::clean_attr("class", &mut attrs.borrow_mut());
+                html::clean_attr("style", &mut attrs.borrow_mut());
             }
-            ProcessingInstruction { .. } => unreachable!(),
+            NodeData::ProcessingInstruction { .. } => unreachable!(),
         }
         let mut useless_nodes = vec![];
         for (i, child) in handle.children.borrow().iter().enumerate() {
@@ -359,7 +359,7 @@ impl<'a> Scorer<'a> {
         for node in useless_nodes.iter() {
             dom.remove_from_parent(node);
         }
-        if dom::is_empty(handle) {
+        if html::is_empty(handle) {
             useless = true
         }
         useless
@@ -368,7 +368,7 @@ impl<'a> Scorer<'a> {
     fn calculate_content_score(&self, handle: Handle) -> f32 {
         let mut score: f32 = 1.0;
         let mut text = String::new();
-        dom::extract_text(handle.clone(), &mut text, true);
+        extract_text(handle.clone(), &mut text, true);
         let mat = self.options.punctuations.find_iter(&text);
         score += mat.count() as f32;
         score += f32::min(f32::floor(text.chars().count() as f32 / 100.0), 3.0);
@@ -377,12 +377,12 @@ impl<'a> Scorer<'a> {
 
     fn get_class_weight(&self, handle: Handle) -> f32 {
         let mut weight: f32 = 0.0;
-        if let Element {
+        if let NodeData::Element {
             name: _, ref attrs, ..
         } = handle.data
         {
             for name in ["id", "class"].iter() {
-                if let Some(val) = dom::attr(name, &attrs.borrow()) {
+                if let Some(val) = html::attr(name, &attrs.borrow()) {
                     if self.options.positive_candidates.is_match(&val) {
                         weight += self.options.positive_candidate_weight
                     };
@@ -396,7 +396,7 @@ impl<'a> Scorer<'a> {
     }
 
     fn init_content_score(&self, handle: Handle) -> f32 {
-        let tag_name = dom::get_tag_name(handle.clone()).unwrap_or_default();
+        let tag_name = html::get_tag_name(handle.clone()).unwrap_or_default();
         let score = match tag_name.as_ref() {
             "article" => 10.0,
             "div" => 5.0,
@@ -437,7 +437,7 @@ impl<'a> Scorer<'a> {
         handle: Handle,
         candidates: &BTreeMap<String, Candidate>,
     ) -> bool {
-        let tag_name = &dom::get_tag_name(handle.clone()).unwrap_or_default();
+        let tag_name = &html::get_tag_name(handle.clone()).unwrap_or_default();
         let weight = self.get_class_weight(handle.clone());
         let score = id
             .to_str()
@@ -447,24 +447,24 @@ impl<'a> Scorer<'a> {
         if weight + score < 0.0 {
             return true;
         }
-        let text_nodes_len = dom::text_children_count(handle.clone());
+        let text_nodes_len = html::text_children_count(handle.clone());
         let mut p_nodes: Vec<Rc<Node>> = vec![];
         let mut img_nodes: Vec<Rc<Node>> = vec![];
         let mut li_nodes: Vec<Rc<Node>> = vec![];
         let mut input_nodes: Vec<Rc<Node>> = vec![];
         let mut embed_nodes: Vec<Rc<Node>> = vec![];
-        dom::find_node(handle.clone(), "p", &mut p_nodes);
-        dom::find_node(handle.clone(), "img", &mut img_nodes);
-        dom::find_node(handle.clone(), "li", &mut li_nodes);
-        dom::find_node(handle.clone(), "input", &mut input_nodes);
-        dom::find_node(handle.clone(), "embed", &mut embed_nodes);
+        html::find_node(handle.clone(), "p", &mut p_nodes);
+        html::find_node(handle.clone(), "img", &mut img_nodes);
+        html::find_node(handle.clone(), "li", &mut li_nodes);
+        html::find_node(handle.clone(), "input", &mut input_nodes);
+        html::find_node(handle.clone(), "embed", &mut embed_nodes);
         let p_count = p_nodes.len();
         let img_count = img_nodes.len();
         let li_count = li_nodes.len() as i32 - 100;
         let input_count = input_nodes.len();
         let embed_count = embed_nodes.len();
         let link_density = get_link_density(handle.clone());
-        let content_length = dom::text_len(handle.clone());
+        let content_length = html::text_len(handle.clone());
         let para_count = text_nodes_len + p_count;
 
         if img_count > para_count + text_nodes_len {
@@ -489,15 +489,15 @@ impl<'a> Scorer<'a> {
     }
 
     fn is_candidate(&self, handle: Handle) -> bool {
-        let text_len = dom::text_len(handle.clone());
+        let text_len = html::text_len(handle.clone());
         if text_len < self.options.min_candidate_length {
             return false;
         }
-        let n: &str = &dom::get_tag_name(handle.clone()).unwrap_or_default();
+        let n: &str = &html::get_tag_name(handle.clone()).unwrap_or_default();
         match n {
             "p" => true,
             "div" | "article" | "center" | "section" => {
-                !dom::has_nodes(handle.clone(), self.options.block_child_tags)
+                !html::has_nodes(handle.clone(), self.options.block_child_tags)
             }
             _ => false,
         }
@@ -505,43 +505,43 @@ impl<'a> Scorer<'a> {
 }
 
 pub fn fix_img_path(handle: Handle, url: &Url) -> bool {
-    let src = dom::get_attr("src", handle.clone());
+    let src = html::get_attr("src", handle.clone());
     let s = match src {
         Some(src) => src,
         None => return false,
     };
     if !s.starts_with("//") && !s.starts_with("http://") && !s.starts_with("https://") {
         if let Ok(new_url) = url.join(&s) {
-            dom::set_attr("src", new_url.as_str(), handle)
+            html::set_attr("src", new_url.as_str(), handle)
         }
     }
     true
 }
 
 pub fn fix_anchor_path(handle: Handle, url: &Url) -> bool {
-    let src = dom::get_attr("href", handle.clone());
+    let src = html::get_attr("href", handle.clone());
     let s = match src {
         Some(src) => src,
         None => return false,
     };
     if !s.starts_with("//") && !s.starts_with("http://") && !s.starts_with("https://") {
         if let Ok(new_url) = url.join(&s) {
-            dom::set_attr("href", new_url.as_str(), handle)
+            html::set_attr("href", new_url.as_str(), handle)
         }
     }
     true
 }
 
 pub fn get_link_density(handle: Handle) -> f32 {
-    let text_length = dom::text_len(handle.clone()) as f32;
+    let text_length = html::text_len(handle.clone()) as f32;
     if text_length == 0.0 {
         return 0.0;
     }
     let mut link_length = 0.0;
     let mut links: Vec<Rc<Node>> = vec![];
-    dom::find_node(handle.clone(), "a", &mut links);
+    html::find_node(handle.clone(), "a", &mut links);
     for link in links.iter() {
-        link_length += dom::text_len(link.clone()) as f32;
+        link_length += html::text_len(link.clone()) as f32;
     }
     link_length / text_length
 }
@@ -571,7 +571,7 @@ mod tests {
             .read_from(&mut html.as_bytes())
             .unwrap();
 
-        assert!(dom.errors.is_empty(), "{:?}", dom.errors);
+        assert!(dom.errors.borrow().is_empty(), "{:?}", dom.errors);
 
         let mut candidates = BTreeMap::new();
         let mut nodes = BTreeMap::new();
@@ -605,7 +605,7 @@ mod tests {
             .read_from(&mut html.as_bytes())
             .unwrap();
 
-        assert!(dom.errors.is_empty(), "{:?}", dom.errors);
+        assert!(dom.errors.borrow().is_empty(), "{:?}", dom.errors);
 
         let mut candidates = BTreeMap::new();
         let mut nodes = BTreeMap::new();

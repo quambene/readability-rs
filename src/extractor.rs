@@ -1,12 +1,12 @@
 use crate::{
-    dom,
+    dom::{Handle, NodeData, RcDom, SerializableHandle},
     error::ReadabilityError,
+    html,
     scorer::{self, Scorer, ScorerOptions, TopCandidate},
     utils::{debug_candidate, debug_candidates},
 };
 use html5ever::{parse_document, serialize, tendril::stream::TendrilSink, ParseOpts};
 use log::{debug, trace};
-use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use scorer::Candidate;
 use std::{cell::Cell, collections::BTreeMap, default::Default, io::Read, path::Path};
 use url::Url;
@@ -48,8 +48,8 @@ where
         .from_utf8()
         .read_from(input)?;
 
-    if opts.parse_options.strict && !dom.errors.is_empty() {
-        return Err(ReadabilityError::ParseHtml(dom.errors));
+    if opts.parse_options.strict && !dom.errors.borrow().is_empty() {
+        return Err(ReadabilityError::ParseHtml(dom.errors.into_inner()));
     }
 
     let content = extract_content(&mut dom, url, opts);
@@ -64,7 +64,7 @@ where
 
     let mut text: String = String::new();
 
-    dom::extract_text(content.node.clone(), &mut text, true);
+    extract_text(content.node.clone(), &mut text, true);
 
     let content_string = String::from_utf8(bytes).unwrap_or_default();
 
@@ -119,5 +119,32 @@ pub fn extract_content(dom: &mut RcDom, url: &Url, opts: ExtractOptions) -> Cont
     Content {
         node: top_candidate.node().clone(),
         title,
+    }
+}
+
+/// Convert HTML to formatted text, including linebreaks and whitespaces.
+pub fn extract_text(handle: Handle, text: &mut String, deep: bool) {
+    let mut last_tag_name = None;
+
+    for child in handle.children.borrow().iter() {
+        match child.data {
+            NodeData::Text { ref contents } => {
+                text.push_str(contents.borrow().as_ref());
+            }
+            NodeData::Element { .. } => {
+                if deep {
+                    if let Some(tag_name) = last_tag_name {
+                        if &tag_name == "p" {
+                            text.push('\n');
+                        }
+                    }
+
+                    extract_text(child.clone(), text, deep);
+
+                    last_tag_name = html::get_tag_name(child.clone());
+                }
+            }
+            _ => (),
+        }
     }
 }

@@ -1,6 +1,7 @@
 mod dom;
 mod error;
 mod extractor;
+pub mod html;
 mod scorer;
 mod utils;
 

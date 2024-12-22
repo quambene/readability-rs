@@ -19,11 +19,11 @@ name = "readability"
 [dependencies]
 regex = "1.11"
 url = "2.4"
-html5ever = "0.26"
-markup5ever_rcdom = "0.2"
+html5ever = "0.29"
 lazy_static = "1.4"
 log = "0.4.22"
 thiserror = "2.0.6"
+tendril = "0.4.3"
 
 [dev-dependencies]
 env_logger = "0.11.5"

@@ -1,5 +1,7 @@
-use crate::scorer::Candidate;
-use markup5ever_rcdom::{Handle, NodeData};
+use crate::{
+    dom::{Handle, NodeData},
+    scorer::Candidate,
+};
 use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq)]
