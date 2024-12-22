@@ -11,7 +11,6 @@ use html5ever::{
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::{borrow::Cow, cell::Cell, collections::BTreeMap, path::Path, rc::Rc};
-
 use url::Url;
 
 const PUNCTUATIONS_REGEX: &str = r"([、。，．！？]|\.[^A-Za-z0-9]|,[^0-9]|!|\?)";
