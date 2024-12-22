@@ -4,6 +4,7 @@
 
 - changed
   - Make options clonable
+  - Update dependencies
 
 ### v0.5.0
 
