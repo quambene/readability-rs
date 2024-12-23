@@ -2,6 +2,7 @@
   "name": "readability-bench",
   "version": "0.0.1",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "test": "tests"
   },
