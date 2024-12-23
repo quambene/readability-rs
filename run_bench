@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Run JS bench
+/usr/bin/time -v node ./benches/readability.js
+
+# Run RS bench
+cargo bench --bench readability
