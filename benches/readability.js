@@ -15,4 +15,4 @@ const benchReadability = (filePath) => {
     console.timeEnd('readability.js');
 };
 
-benchReadability('benches/hn.html');
+benchReadability('benches/bench.html');

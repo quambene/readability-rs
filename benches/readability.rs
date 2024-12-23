@@ -28,7 +28,7 @@ fn extract_options<'a>(max_candidate_parents: usize) -> ExtractOptions<'a> {
 }
 
 fn bench_extract(c: &mut Criterion) {
-    let mut html = File::open("benches/hn.html").unwrap();
+    let mut html = File::open("benches/bench.html").unwrap();
     let url = Url::from_str("https://news.ycombinator.com/item?id=42200407").unwrap();
 
     c.bench_function("extract 2", |b| {
