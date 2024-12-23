@@ -8,6 +8,7 @@ Cargo.lock
 # Javascript
 node_modules
 package-lock.json
+eslint.config.mjs
 
 # VS Code
 .vscode
