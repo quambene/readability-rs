@@ -1,7 +1,16 @@
 #!/bin/bash
 
+set -e
+
 # Run JS bench
-/usr/bin/time -v node ./benches/javascript/readability.js
+cd benches/javascript
+/usr/bin/time -v node readability.js
+cd ..
+
+# Run go bench
+cd benches/go
+go run readability.go
+cd ..
 
 # Run RS bench
 cargo bench --bench readability
