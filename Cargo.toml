@@ -18,7 +18,11 @@ name = "readability"
 
 [[bench]]
 name = "readability"
-path = "benches/rust/readability.rs"
+harness = false
+
+[[bench]]
+name = "readability-main"
+path = "benches/rust/main.rs"
 harness = false
 
 [dependencies]

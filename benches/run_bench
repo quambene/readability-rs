@@ -2,15 +2,18 @@
 
 set -e
 
-# Run JS bench
-cd benches/javascript
+# Run javascript bench
+cd javascript
 /usr/bin/time -v node readability.js
 cd ..
 
 # Run go bench
-cd benches/go
+cd go
 go run readability.go
 cd ..
 
-# Run RS bench
+# Run rust bench
+cargo bench --bench readability-main
+
+# Run rust bench
 cargo bench --bench readability
