@@ -7,11 +7,6 @@ cd javascript
 /usr/bin/time -v node readability.js
 cd ..
 
-# Run go bench
-cd go
-go run readability.go
-cd ..
-
 # Run rust bench
 cargo bench --bench readability-main
 
