@@ -8,33 +8,43 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	readability "github.com/philipjkim/goreadability"
+	"golang.org/x/net/html"
 )
 
 func main() {
 	url := "https://en.wikipedia.org/wiki/Particle_physics"
 	opt := readability.NewOption()
+	opt.LookupOpenGraphTags = false
 
 	file, err := os.Open("../wikipedia.html")
 	if err != nil {
-		log.Fatalf("Failed to open file: %v", err)
+		log.Fatalf("Can't open file: %v", err)
 	}
 	defer file.Close()
 
-	doc, err := goquery.NewDocumentFromReader(file)
+	parse_opts := html.ParseOptionEnableScripting(false)
+	node, err := html.ParseWithOptions(file, parse_opts)
+
 	if err != nil {
-		log.Fatalf("Failed to create document: %v", err)
+		fmt.Println("Can't parse HTML:", err)
+	}
+
+	document := goquery.NewDocumentFromNode(node)
+	if err != nil {
+		log.Fatalf("Can't create document: %v", err)
 	}
 
 	start := time.Now()
 
-	content, err := readability.ExtractFromDocument(doc, url, opt)
-	if err != nil {
-		log.Fatalf("Failed to extract article: %v", err)
-	}
-
-	_ = content
+	content, err := readability.ExtractFromDocument(document, url, opt)
 
 	elapsed := time.Since(start)
+
+	if err != nil {
+		log.Fatalf("Can't extract article: %v", err)
+	}
+
+	fmt.Printf("content: %s\n", content.Description)
 
 	fmt.Printf("readability.go: %s\n", elapsed)
 }
