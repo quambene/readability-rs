@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+# Run javascript bench
+cd javascript
+/usr/bin/time -v node readability.js
+cd ..
+
+# Run rust bench
+cargo bench --bench readability-main
+
+# Run rust bench
+cargo bench --bench readability

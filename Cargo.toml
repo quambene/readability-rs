@@ -20,6 +20,11 @@ name = "readability"
 name = "readability"
 harness = false
 
+[[bench]]
+name = "readability-main"
+path = "benches/rust/main.rs"
+harness = false
+
 [dependencies]
 regex = "1.11"
 url = "2.4"
